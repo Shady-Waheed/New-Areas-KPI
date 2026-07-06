@@ -8,7 +8,7 @@ export default function NotificationBell() {
   const { panelOpen, togglePanel } = useNotificationStore()
 
   return (
-    <div className="relative">
+    <div className="relative inline-flex">
       <button
         onClick={togglePanel}
         className="relative rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
