@@ -1,13 +1,13 @@
-import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
-import Header from '../components/layout/Header'
-import Sidebar from '../components/layout/Sidebar'
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import Header from "../components/layout/Header";
+import Sidebar from "../components/layout/Sidebar";
 
 export default function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950 lg:flex-row">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
@@ -16,5 +16,5 @@ export default function DashboardLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }

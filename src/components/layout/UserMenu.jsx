@@ -1,40 +1,40 @@
-import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, LogOut, UserCircle } from 'lucide-react'
-import { logoutUser } from '../../services/authService'
-import { useAuthStore } from '../../store/authStore'
-import { useAuth } from '../../hooks/useAuth'
-import { ROLE_LABELS } from '../../utils/constants'
-import UserAvatar from '../common/UserAvatar'
-import toast from 'react-hot-toast'
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronDown, LogOut, UserCircle } from "lucide-react";
+import { logoutUser } from "../../services/authService";
+import { useAuthStore } from "../../store/authStore";
+import { useAuth } from "../../hooks/useAuth";
+import { ROLE_LABELS } from "../../utils/constants";
+import UserAvatar from "../common/UserAvatar";
+import toast from "react-hot-toast";
 
 export default function UserMenu() {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const clearUser = useAuthStore((s) => s.clearUser)
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const clearUser = useAuthStore((s) => s.clearUser);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
-      await logoutUser()
-      clearUser()
-      navigate('/login')
-      toast.success('Logged out successfully')
+      await logoutUser();
+      clearUser();
+      navigate("/login");
+      toast.success("Logged out successfully");
     } catch {
-      toast.error('Failed to logout')
+      toast.error("Failed to logout");
     }
-  }
+  };
 
-  if (!user) return null
+  if (!user) return null;
 
   return (
     <div className="relative" ref={ref}>
@@ -50,13 +50,17 @@ export default function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+        <div className="absolute right-0 z-50 mt-2 w-[min(92vw,14rem)] rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
           <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <UserAvatar name={user.name} size="md" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {user.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {user.email}
+                </p>
                 <p className="mt-1 text-xs text-primary-600 dark:text-primary-400">
                   {ROLE_LABELS[user.role]}
                 </p>
@@ -81,5 +85,5 @@ export default function UserMenu() {
         </div>
       )}
     </div>
-  )
+  );
 }
