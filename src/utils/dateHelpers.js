@@ -8,6 +8,26 @@ export function getTodayString() {
 }
 
 /**
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {boolean}
+ */
+export function isDateBeforeToday(dateStr) {
+  return dateStr < getTodayString()
+}
+
+/**
+ * @param {string} dateStr
+ * @param {{ allowDate?: string }} [options]
+ * @returns {true | string}
+ */
+export function validateEventStartDate(dateStr, options = {}) {
+  if (!dateStr) return 'Start date is required'
+  if (!isDateBeforeToday(dateStr)) return true
+  if (options.allowDate && dateStr === options.allowDate) return true
+  return 'لا يمكن إضافة حدث قبل اليوم الحالي'
+}
+
+/**
  * @returns {string} Current time as HH:mm
  */
 export function getCurrentTimeString() {

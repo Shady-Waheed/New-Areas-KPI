@@ -5,7 +5,7 @@ import Textarea from '../common/Textarea'
 import Button from '../common/Button'
 import SupervisionTypePicker from './SupervisionTypePicker'
 import { getActivityCodeOptions } from '../../utils/constants'
-import { getTodayString } from '../../utils/dateHelpers'
+import { getTodayString, validateEventStartDate } from '../../utils/dateHelpers'
 import { useAuth } from '../../hooks/useAuth'
 import { inferSupervisionType, resolveSupervisionFields } from '../../utils/supervision'
 
@@ -20,6 +20,8 @@ import { inferSupervisionType, resolveSupervisionFields } from '../../utils/supe
 export default function EventForm({ initialData, onSubmit, onCancel, loading }) {
   const { user } = useAuth()
   const isEditing = Boolean(initialData?.id)
+  const today = getTodayString()
+  const originalStartDate = initialData?.startDate
 
   const {
     register,
@@ -113,8 +115,15 @@ export default function EventForm({ initialData, onSubmit, onCancel, loading }) 
         <Input
           label="Start Date"
           type="date"
+          min={isEditing && originalStartDate && originalStartDate < today ? undefined : today}
           error={errors.startDate?.message}
-          register={register('startDate', { required: 'Start date is required' })}
+          register={register('startDate', {
+            required: 'Start date is required',
+            validate: (value) =>
+              validateEventStartDate(value, {
+                allowDate: isEditing ? originalStartDate : undefined,
+              }),
+          })}
         />
         <Input
           label="Start Time"

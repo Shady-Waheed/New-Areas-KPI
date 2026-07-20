@@ -12,6 +12,7 @@ import DayPeopleModal from './DayPeopleModal'
 import { createEvent } from '../../services/eventService'
 import EventColorLegend from '../events/EventColorLegend'
 import { toISODateTime } from '../../utils/formatters'
+import { getTodayString, isDateBeforeToday } from '../../utils/dateHelpers'
 import {
   buildCalendarEvents,
   getEventsForDate,
@@ -112,6 +113,11 @@ export default function EventCalendar({ events }) {
   }
 
   const handleDateClick = (info) => {
+    if (isDateBeforeToday(info.dateStr)) {
+      toast.error('لا يمكن إضافة حدث قبل اليوم الحالي')
+      return
+    }
+
     const dayEvents = getEventsForDate(events, info.dateStr)
 
     if (
@@ -151,6 +157,12 @@ export default function EventCalendar({ events }) {
 
   const handleCreate = async (data) => {
     if (!user) return
+
+    if (isDateBeforeToday(data.startDate)) {
+      toast.error('لا يمكن إضافة حدث قبل اليوم الحالي')
+      return
+    }
+
     setLoading(true)
     try {
       await createEvent(data, user)
@@ -193,6 +205,7 @@ export default function EventCalendar({ events }) {
         }}
         dayCellDidMount={handleDayCellDidMount}
         dateClick={handleDateClick}
+        selectAllow={(selectInfo) => !isDateBeforeToday(toLocalDateString(selectInfo.start))}
         eventClick={handleEventClick}
         displayEventTime={false}
         height="auto"
