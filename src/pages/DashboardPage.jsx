@@ -7,7 +7,7 @@ import { useEventStartNotifier } from '../hooks/useEventStartNotifier'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isPrivileged } = useAuth()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
@@ -30,8 +30,8 @@ export default function DashboardPage() {
   }, [user])
 
   const filteredEvents = useMemo(
-    () => filterEvents(events, filters),
-    [events, filters]
+    () => (isPrivileged ? filterEvents(events, filters) : events),
+    [events, filters, isPrivileged]
   )
 
   useEventStartNotifier(events)
@@ -46,11 +46,13 @@ export default function DashboardPage() {
 
   return (
     <div className="page-stack">
-      <EventFilters
-        filters={filters}
-        onChange={setFilters}
-        onClear={handleClearFilters}
-      />
+      {isPrivileged && (
+        <EventFilters
+          filters={filters}
+          onChange={setFilters}
+          onClear={handleClearFilters}
+        />
+      )}
       <EventCalendar events={filteredEvents} />
     </div>
   )

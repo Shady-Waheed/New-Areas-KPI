@@ -139,4 +139,3 @@ node scripts/seedData.js
 ## License
 
 Private — All rights reserved.
-# New-Areas-KPI

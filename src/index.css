@@ -39,30 +39,8 @@ body,
   height: 100%;
 }
 
-html,
-body {
-  width: 100%;
-  min-width: 0;
-}
-
-body {
-  overflow-x: hidden;
-}
-
 html {
   font-family: var(--font-sans-ar);
-}
-
-main,
-.page-stack,
-.app-header,
-.auth-card-wrap,
-.table-responsive,
-.fc,
-.fc .fc-toolbar,
-.fc .fc-toolbar-chunk,
-.fc .fc-button-group {
-  min-width: 0;
 }
 
 body {
