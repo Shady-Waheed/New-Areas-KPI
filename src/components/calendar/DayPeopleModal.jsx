@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import Modal from '../common/Modal'
-import { ArrowLeft, ChevronLeft } from 'lucide-react'
-import { getActivityCodeLabel } from '../../utils/constants'
+import { useEffect, useMemo, useState } from "react";
+import Modal from "../common/Modal";
+import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { getActivityCodeLabel } from "../../utils/constants";
 
 /**
  * @param {{
@@ -12,52 +12,76 @@ import { getActivityCodeLabel } from '../../utils/constants'
  *   onSelectEvent: (event: import('../../types').Event) => void
  * }} props
  */
-export default function DayPeopleModal({ isOpen, onClose, date, events, onSelectEvent }) {
-  const [selectedPersonKey, setSelectedPersonKey] = useState(null)
+export default function DayPeopleModal({
+  isOpen,
+  onClose,
+  date,
+  events,
+  onSelectEvent,
+}) {
+  const [selectedPersonKey, setSelectedPersonKey] = useState(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setSelectedPersonKey(null)
+      setSelectedPersonKey(null);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const groupedPeople = useMemo(() => {
-    const map = new Map()
+    const map = new Map();
 
     events.forEach((event) => {
-      const personKey = event.creatorId || event.createdById || event.creatorName || event.createdByName || 'unknown'
-      const displayName = event.creatorName || event.createdByName || 'غير معروف'
+      const personKey =
+        event.creatorId ||
+        event.createdById ||
+        event.creatorName ||
+        event.createdByName ||
+        "unknown";
+      const displayName =
+        event.creatorName || event.createdByName || "غير معروف";
 
       if (!map.has(personKey)) {
         map.set(personKey, {
           key: personKey,
           displayName,
           events: [],
-        })
+        });
       }
 
-      map.get(personKey).events.push(event)
-    })
+      map.get(personKey).events.push(event);
+    });
 
-    return Array.from(map.values()).sort((a, b) => a.displayName.localeCompare(b.displayName))
-  }, [events])
+    return Array.from(map.values()).sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    );
+  }, [events]);
 
-  const selectedPerson = groupedPeople.find((person) => person.key === selectedPersonKey) || null
-  const selectedEvents = selectedPerson?.events || []
+  const selectedPerson =
+    groupedPeople.find((person) => person.key === selectedPersonKey) || null;
+  const selectedEvents = selectedPerson?.events || [];
 
-  if (!date) return null
+  if (!date) return null;
 
   const closeModal = () => {
-    setSelectedPersonKey(null)
-    onClose()
-  }
+    setSelectedPersonKey(null);
+    onClose();
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} title={selectedPerson ? `أحداث ${selectedPerson.displayName}` : `أحداث يوم ${date}`} size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={closeModal}
+      title={
+        selectedPerson
+          ? `أحداث ${selectedPerson.displayName}`
+          : `أحداث يوم ${date}`
+      }
+      size="md"
+    >
       <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
         {selectedPerson
-          ? `${selectedEvents.length} ${selectedEvents.length === 1 ? 'حدث' : 'أحداث'} — اختر حدثًا لعرض التفاصيل`
-          : `${events.length} ${events.length === 1 ? 'حدث' : 'أحداث'} — اختر شخصًا لعرض أحداثه في هذا اليوم`}
+          ? `${selectedEvents.length} ${selectedEvents.length === 1 ? "حدث" : "أحداث"} — اختر حدثًا لعرض التفاصيل`
+          : `${events.length} ${events.length === 1 ? "حدث" : "أحداث"} — اختر شخصًا لعرض أحداثه في هذا اليوم`}
       </p>
 
       {selectedPerson && (
@@ -85,7 +109,8 @@ export default function DayPeopleModal({ isOpen, onClose, date, events, onSelect
                     {event.title}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {getActivityCodeLabel(event.activityCode)} · {event.startTime}
+                    {getActivityCodeLabel(event.activityCode)} ·{" "}
+                    {event.startTime}
                   </p>
                 </div>
                 <ChevronLeft size={18} className="shrink-0 text-gray-400" />
@@ -103,7 +128,8 @@ export default function DayPeopleModal({ isOpen, onClose, date, events, onSelect
                     {person.displayName}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {person.events.length} {person.events.length === 1 ? 'حدث' : 'أحداث'}
+                    {person.events.length}{" "}
+                    {person.events.length === 1 ? "حدث" : "أحداث"}
                   </p>
                 </div>
                 <ChevronLeft size={18} className="shrink-0 text-gray-400" />
@@ -111,5 +137,5 @@ export default function DayPeopleModal({ isOpen, onClose, date, events, onSelect
             ))}
       </div>
     </Modal>
-  )
+  );
 }
