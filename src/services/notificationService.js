@@ -27,24 +27,30 @@ function sortNotifications(notifications) {
 
 /**
  * Create a notification.
- * @param {{ userId: string, title: string, message: string }} data
+ * @param {{ userId: string, title: string, message: string, type?: string, eventId?: string }} data
  */
 export async function createNotification(data) {
   if (!data.userId) throw new Error('Notification userId is required')
 
-  await addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
+  /** @type {Record<string, unknown>} */
+  const payload = {
     userId: data.userId,
     title: data.title,
     message: data.message,
     read: false,
     createdAt: serverTimestamp(),
-  })
+  }
+
+  if (data.type) payload.type = data.type
+  if (data.eventId) payload.eventId = data.eventId
+
+  await addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), payload)
 }
 
 /**
  * Notify multiple users.
  * @param {string[]} userIds
- * @param {{ title: string, message: string }} notification
+ * @param {{ title: string, message: string, type?: string, eventId?: string }} notification
  */
 export async function notifyUsers(userIds, notification) {
   const uniqueIds = [...new Set(userIds)].filter(Boolean)

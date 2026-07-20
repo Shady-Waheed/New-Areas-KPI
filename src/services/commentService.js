@@ -68,6 +68,8 @@ export async function addComment(data) {
         userId: data.creatorId,
         title: 'New Comment',
         message: `${data.userName} commented on "${data.eventTitle}"`,
+        type: 'comment',
+        eventId: data.eventId,
       })
     } catch (error) {
       console.warn('Comment notification failed:', error)

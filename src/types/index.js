@@ -55,6 +55,8 @@
  * @property {string} title
  * @property {string} message
  * @property {boolean} read
+ * @property {'event' | 'comment' | 'approval' | 'event_started' | 'users'} [type]
+ * @property {string} [eventId]
  * @property {import('firebase/firestore').Timestamp} createdAt
  */
 

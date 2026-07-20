@@ -30,9 +30,19 @@ function getEventErrorMessage(error) {
 }
 
 /**
- * @param {{ events: import('../../types').Event[] }} props
+ * @param {{
+ *   events: import('../../types').Event[],
+ *   eventToOpen?: import('../../types').Event | null,
+ *   missingOpenEventId?: string | null,
+ *   onOpenEventHandled?: () => void
+ * }} props
  */
-export default function EventCalendar({ events }) {
+export default function EventCalendar({
+  events,
+  eventToOpen,
+  missingOpenEventId,
+  onOpenEventHandled,
+}) {
   const { user, isPrivileged } = useAuth()
   const calendarRef = useRef(null)
   const [createOpen, setCreateOpen] = useState(false)
@@ -44,6 +54,8 @@ export default function EventCalendar({ events }) {
   const [dayPeopleOpen, setDayPeopleOpen] = useState(false)
   const [dayPeopleDate, setDayPeopleDate] = useState(null)
   const [dayPeopleEvents, setDayPeopleEvents] = useState([])
+  const longPressTimerRef = useRef(null)
+  const suppressDateClickRef = useRef(false)
   const [visibleRange, setVisibleRange] = useState(() => {
     const now = new Date()
     return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date(now.getFullYear(), now.getMonth() + 1, 0) }
@@ -78,6 +90,27 @@ export default function EventCalendar({ events }) {
     setDayPeopleEvents(getEventsForDate(events, dayPeopleDate))
   }, [events, dayPeopleOpen, dayPeopleDate])
 
+  useEffect(() => {
+    if (eventToOpen) {
+      setSelectedEvent(eventToOpen)
+      setDetailsOpen(true)
+      onOpenEventHandled?.()
+      return
+    }
+
+    if (missingOpenEventId) {
+      toast.error('الحدث غير متاح أو لا يمكنك عرضه')
+      onOpenEventHandled?.()
+    }
+  }, [eventToOpen, missingOpenEventId, onOpenEventHandled])
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
   const handleDayCellDidMount = useCallback(
     (info) => {
       if (currentView !== 'dayGridMonth') return
@@ -97,8 +130,29 @@ export default function EventCalendar({ events }) {
       label.textContent = holidayName
       label.title = holidayName
       frame.appendChild(label)
+
+      const handleLongPressStart = () => {
+        if (!isPrivileged || currentView !== 'dayGridMonth') return
+
+        clearLongPressTimer()
+        longPressTimerRef.current = setTimeout(() => {
+          suppressDateClickRef.current = true
+          openDayPeopleModal(dateStr, getEventsForDate(events, dateStr))
+        }, 400)
+      }
+
+      const handleLongPressEnd = () => {
+        clearLongPressTimer()
+      }
+
+      info.el.addEventListener('mousedown', handleLongPressStart)
+      info.el.addEventListener('mouseup', handleLongPressEnd)
+      info.el.addEventListener('mouseleave', handleLongPressEnd)
+      info.el.addEventListener('touchstart', handleLongPressStart, { passive: true })
+      info.el.addEventListener('touchend', handleLongPressEnd)
+      info.el.addEventListener('touchcancel', handleLongPressEnd)
     },
-    [currentView, holidayLabelMap]
+    [clearLongPressTimer, currentView, holidayLabelMap, events, isPrivileged]
   )
 
   const openDayPeopleModal = (date, dayEvents) => {
@@ -113,6 +167,12 @@ export default function EventCalendar({ events }) {
   }
 
   const handleDateClick = (info) => {
+    if (suppressDateClickRef.current) {
+      suppressDateClickRef.current = false
+      clearLongPressTimer()
+      return
+    }
+
     if (isDateBeforeToday(info.dateStr)) {
       toast.error('لا يمكن إضافة حدث قبل اليوم الحالي')
       return

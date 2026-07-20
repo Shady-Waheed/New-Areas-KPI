@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import EventCalendar from '../components/calendar/EventCalendar'
 import EventFilters from '../components/events/EventFilters'
 import { subscribeToEvents, filterEvents } from '../services/eventService'
@@ -8,6 +9,8 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 
 export default function DashboardPage() {
   const { user, isPrivileged } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const openEventId = searchParams.get('event')
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
@@ -34,11 +37,24 @@ export default function DashboardPage() {
     [events, filters, isPrivileged]
   )
 
+  const eventToOpen = useMemo(() => {
+    if (!openEventId) return null
+    return events.find((event) => event.id === openEventId) || null
+  }, [events, openEventId])
+
   useEventStartNotifier(events)
 
   const handleClearFilters = () => {
     setFilters({ person: '', area: '', church: '', activityCode: '', date: '' })
   }
+
+  const handleOpenEventHandled = useCallback(() => {
+    if (searchParams.has('event')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('event')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   if (loading) {
     return <LoadingSpinner className="py-20" />
@@ -53,7 +69,12 @@ export default function DashboardPage() {
           onClear={handleClearFilters}
         />
       )}
-      <EventCalendar events={filteredEvents} />
+      <EventCalendar
+        events={filteredEvents}
+        eventToOpen={eventToOpen}
+        missingOpenEventId={openEventId && !eventToOpen ? openEventId : null}
+        onOpenEventHandled={handleOpenEventHandled}
+      />
     </div>
   )
 }

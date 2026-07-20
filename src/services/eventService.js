@@ -166,6 +166,8 @@ export async function createEvent(data, currentUser) {
       await notifyUsers([eventData.creatorId], {
         title: 'New Event Created',
         message: `${currentUser.name} created an event "${eventData.title}" for you.`,
+        type: 'event',
+        eventId: docRef.id,
       })
     }
 
@@ -182,6 +184,8 @@ export async function createEvent(data, currentUser) {
         await notifyUsers(privilegedIds, {
           title: 'New Event',
           message: `${currentUser.name} created a new event: "${eventData.title}"`,
+          type: 'event',
+          eventId: docRef.id,
         })
       }
     }

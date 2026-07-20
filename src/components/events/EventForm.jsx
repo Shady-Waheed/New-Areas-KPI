@@ -4,7 +4,7 @@ import Select from '../common/Select'
 import Textarea from '../common/Textarea'
 import Button from '../common/Button'
 import SupervisionTypePicker from './SupervisionTypePicker'
-import { getActivityCodeOptions } from '../../utils/constants'
+import { getActivityCodeOptions, getActivityNumberOptions, validateActivityNumber } from '../../utils/constants'
 import { getTodayString, validateEventStartDate } from '../../utils/dateHelpers'
 import { useAuth } from '../../hooks/useAuth'
 import { inferSupervisionType, resolveSupervisionFields } from '../../utils/supervision'
@@ -90,11 +90,15 @@ export default function EventForm({ initialData, onSubmit, onCancel, loading }) 
           register={register('activityCode', { required: 'Activity code is required' })}
           options={getActivityCodeOptions()}
         />
-        <Input
+        <Select
           label="النشاط"
-          placeholder="Enter activity name"
+          placeholder="1 - 15"
           error={errors.activityName?.message}
-          register={register('activityName', { required: 'Activity name is required' })}
+          register={register('activityName', {
+            required: 'النشاط مطلوب',
+            validate: validateActivityNumber,
+          })}
+          options={getActivityNumberOptions()}
         />
       </div>
 

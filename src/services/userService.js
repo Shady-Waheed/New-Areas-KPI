@@ -87,6 +87,7 @@ export async function approveUser(userId, userName) {
       userId,
       title: 'Account Approved',
       message: `Welcome ${userName}! Your account has been approved. You can now access the application.`,
+      type: 'approval',
     })
   } catch (error) {
     console.error('Approval notification failed:', error)

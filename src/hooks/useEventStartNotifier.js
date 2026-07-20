@@ -26,6 +26,8 @@ export function useEventStartNotifier(events) {
             userId: user.id,
             title: 'Event Started',
             message: `"${event.title}" has reached its start time.`,
+            type: 'event_started',
+            eventId: event.id,
           }).catch(console.error)
         }
       })

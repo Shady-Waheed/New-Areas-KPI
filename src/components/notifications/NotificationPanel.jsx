@@ -1,13 +1,16 @@
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck } from 'lucide-react'
 import { useNotifications } from '../../hooks/useNotifications'
 import { useNotificationStore } from '../../store/notificationStore'
 import { markNotificationRead, markAllNotificationsRead } from '../../services/notificationService'
+import { getNotificationPath } from '../../utils/notificationNavigation'
 import { useAuth } from '../../hooks/useAuth'
 import { formatRelativeTime } from '../../utils/formatters'
 
 export default function NotificationPanel() {
   const ref = useRef(null)
+  const navigate = useNavigate()
   const { notifications } = useNotifications()
   const { setPanelOpen } = useNotificationStore()
   const { user } = useAuth()
@@ -26,8 +29,13 @@ export default function NotificationPanel() {
     if (user?.id) await markAllNotificationsRead(user.id)
   }
 
-  const handleMarkRead = async (id) => {
-    await markNotificationRead(id)
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read) {
+      await markNotificationRead(notification.id)
+    }
+
+    setPanelOpen(false)
+    navigate(getNotificationPath(notification))
   }
 
   return (
@@ -58,16 +66,17 @@ export default function NotificationPanel() {
           notifications.map((notification) => (
             <button
               key={notification.id}
-              onClick={() => !notification.read && handleMarkRead(notification.id)}
-              className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 ${
+              type="button"
+              onClick={() => handleNotificationClick(notification)}
+              className={`w-full border-b border-gray-100 px-4 py-3 text-right transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 ${
                 !notification.read ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''
-              }`}
+              } cursor-pointer`}
             >
               <div className="flex items-start gap-2">
                 {!notification.read && (
                   <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary-600" />
                 )}
-                <div className={!notification.read ? '' : 'ml-4'}>
+                <div className={`min-w-0 flex-1 ${!notification.read ? '' : 'ms-4'}`}>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {notification.title}
                   </p>

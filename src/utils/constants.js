@@ -35,6 +35,35 @@ export function getActivityCodeLabel(code) {
   return found ? `${found.code} — ${found.labelAr}` : code
 }
 
+export const ACTIVITY_NUMBER_MIN = 1
+export const ACTIVITY_NUMBER_MAX = 15
+
+/**
+ * @returns {{ value: string, label: string }[]}
+ */
+export function getActivityNumberOptions() {
+  return Array.from({ length: ACTIVITY_NUMBER_MAX }, (_, index) => {
+    const value = String(index + ACTIVITY_NUMBER_MIN)
+    return { value, label: value }
+  })
+}
+
+/**
+ * @param {string | number} value
+ * @returns {true | string}
+ */
+export function validateActivityNumber(value) {
+  const num = Number(value)
+  if (
+    !Number.isInteger(num) ||
+    num < ACTIVITY_NUMBER_MIN ||
+    num > ACTIVITY_NUMBER_MAX
+  ) {
+    return `النشاط يجب أن يكون رقماً من ${ACTIVITY_NUMBER_MIN} إلى ${ACTIVITY_NUMBER_MAX}`
+  }
+  return true
+}
+
 export const AREAS = [
   'North Area',
   'South Area',
