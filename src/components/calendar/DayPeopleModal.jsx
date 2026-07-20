@@ -52,7 +52,9 @@ export default function DayPeopleModal({
     });
 
     return Array.from(map.values()).sort((a, b) =>
-      a.displayName.localeCompare(b.displayName),
+      a.displayName.localeCompare(b.displayName, undefined, {
+        sensitivity: "base",
+      }),
     );
   }, [events]);
 
@@ -67,74 +69,92 @@ export default function DayPeopleModal({
     onClose();
   };
 
+  // Helper to embed LTR names inside Arabic title so order stays natural
+  const embedLtr = (name) => `\u202A${name}\u202C`;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={closeModal}
       title={
         selectedPerson
-          ? `أحداث ${selectedPerson.displayName}`
+          ? `أحداث ${embedLtr(selectedPerson.displayName)}`
           : `أحداث يوم ${date}`
       }
       size="md"
     >
-      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-        {selectedPerson
-          ? `${selectedEvents.length} ${selectedEvents.length === 1 ? "حدث" : "أحداث"} — اختر حدثًا لعرض التفاصيل`
-          : `${events.length} ${events.length === 1 ? "حدث" : "أحداث"} — اختر شخصًا لعرض أحداثه في هذا اليوم`}
-      </p>
+      <div dir="rtl" className="text-right">
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          {selectedPerson
+            ? `${selectedEvents.length} ${selectedEvents.length === 1 ? "حدث" : "أحداث"} لهذا الشخص في هذا اليوم`
+            : `${groupedPeople.length} ${groupedPeople.length === 1 ? "شخص" : "أشخاص"} لديهم أحداث في هذا اليوم — اختر الشخص لعرض تفاصيل أحداثه`}
+        </p>
 
-      {selectedPerson && (
-        <button
-          type="button"
-          onClick={() => setSelectedPersonKey(null)}
-          className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-        >
-          <ArrowLeft size={16} />
-          العودة للقائمة
-        </button>
-      )}
+        {selectedPerson && (
+          <button
+            type="button"
+            onClick={() => setSelectedPersonKey(null)}
+            className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+          >
+            <ArrowLeft size={16} />
+            العودة للقائمة
+          </button>
+        )}
 
-      <div className="space-y-2">
-        {selectedPerson
-          ? selectedEvents.map((event) => (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => onSelectEvent(event)}
-                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-right transition-colors hover:border-primary-300 hover:bg-primary-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-600 dark:hover:bg-primary-950/30"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-gray-900 dark:text-gray-100">
-                    {event.title}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {getActivityCodeLabel(event.activityCode)} ·{" "}
-                    {event.startTime}
-                  </p>
-                </div>
-                <ChevronLeft size={18} className="shrink-0 text-gray-400" />
-              </button>
-            ))
-          : groupedPeople.map((person) => (
-              <button
-                key={person.key}
-                type="button"
-                onClick={() => setSelectedPersonKey(person.key)}
-                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-right transition-colors hover:border-primary-300 hover:bg-primary-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-600 dark:hover:bg-primary-950/30"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-gray-900 dark:text-gray-100">
-                    {person.displayName}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {person.events.length}{" "}
-                    {person.events.length === 1 ? "حدث" : "أحداث"}
-                  </p>
-                </div>
-                <ChevronLeft size={18} className="shrink-0 text-gray-400" />
-              </button>
-            ))}
+        <div className="space-y-2">
+          {selectedPerson
+            ? selectedEvents.map((event) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => onSelectEvent(event)}
+                  className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-right text-black dark:text-white transition-colors hover:border-primary-300 hover:bg-primary-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-600 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-black dark:text-white">
+                      <span
+                        dir={
+                          /^[\u0600-\u06FF]/.test(event.title) ? "rtl" : "ltr"
+                        }
+                        className="inline-block text-black dark:text-white"
+                      >
+                        {event.title}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                      {getActivityCodeLabel(event.activityCode)} ·{" "}
+                      {event.startTime}
+                    </p>
+                  </div>
+                  <ChevronLeft size={18} className="shrink-0 text-gray-400" />
+                </button>
+              ))
+            : groupedPeople.map((person) => (
+                <button
+                  key={person.key}
+                  type="button"
+                  onClick={() => setSelectedPersonKey(person.key)}
+                  className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-right text-black dark:text-white transition-colors hover:border-primary-300 hover:bg-primary-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-600 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-black dark:text-white">
+                      <span
+                        dir="ltr"
+                        className="inline-block text-black dark:text-white"
+                      >
+                        {person.displayName}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                      {person.events.length}{" "}
+                      {person.events.length === 1 ? "حدث" : "أحداث"} في هذا
+                      اليوم
+                    </p>
+                  </div>
+                  <ChevronLeft size={18} className="shrink-0 text-gray-400" />
+                </button>
+              ))}
+        </div>
       </div>
     </Modal>
   );

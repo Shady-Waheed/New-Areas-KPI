@@ -159,22 +159,43 @@ export default function EventCalendar({
       const handleLongPressStart = (event) => {
         if (!isPrivileged || currentView !== "dayGridMonth") return;
 
+        const dayEvents = getEventsForDate(events, dateStr);
+        if (!dayEvents.length) return;
+
         event.preventDefault();
         event.stopPropagation();
         clearLongPressTimer();
         longPressTriggeredRef.current = false;
-        info.el.classList.add("ring-2", "ring-primary-500", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900");
+        info.el.classList.add(
+          "ring-2",
+          "ring-primary-500",
+          "ring-offset-2",
+          "ring-offset-white",
+          "dark:ring-offset-gray-900",
+        );
         longPressTimerRef.current = setTimeout(() => {
           longPressTriggeredRef.current = true;
           suppressDateClickRef.current = true;
-          info.el.classList.remove("ring-2", "ring-primary-500", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900");
-          openDayPeopleModal(dateStr, getEventsForDate(events, dateStr));
+          info.el.classList.remove(
+            "ring-2",
+            "ring-primary-500",
+            "ring-offset-2",
+            "ring-offset-white",
+            "dark:ring-offset-gray-900",
+          );
+          openDayPeopleModal(dateStr, dayEvents);
         }, 450);
       };
 
       const handleLongPressEnd = () => {
         clearLongPressTimer();
-        info.el.classList.remove("ring-2", "ring-primary-500", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900");
+        info.el.classList.remove(
+          "ring-2",
+          "ring-primary-500",
+          "ring-offset-2",
+          "ring-offset-white",
+          "dark:ring-offset-gray-900",
+        );
       };
 
       info.el.addEventListener("pointerdown", handleLongPressStart);
@@ -211,24 +232,11 @@ export default function EventCalendar({
       return;
     }
 
-    if (isDateBeforeToday(info.dateStr)) {
-      toast.error("لا يمكن إضافة حدث قبل اليوم الحالي");
-      return;
-    }
-
     const dayEvents = getEventsForDate(events, info.dateStr);
-
-    if (
-      isPrivileged &&
-      currentView === "dayGridMonth" &&
-      dayEvents.length > MAX_VISIBLE_PEOPLE_PER_DAY
-    ) {
+    if (isPrivileged && currentView === "dayGridMonth" && dayEvents.length) {
       openDayPeopleModal(info.dateStr, dayEvents);
       return;
     }
-
-    setPrefillDate(info.dateStr);
-    setCreateOpen(true);
   };
 
   const handleEventClick = (info) => {
@@ -317,6 +325,25 @@ export default function EventCalendar({
           !isDateBeforeToday(toLocalDateString(selectInfo.start))
         }
         eventClick={handleEventClick}
+        eventContent={(arg) => {
+          const props = arg.event.extendedProps || {};
+          if (props.type === "color-count") {
+            const color = props.color;
+            const count = props.count;
+            return (
+              <div className="flex items-center gap-2 p-1">
+                <span
+                  className="inline-block rounded-full"
+                  style={{ width: 8, height: 8, backgroundColor: color }}
+                />
+                <span className="text-[11px] px-2 rounded-md bg-white text-gray-900 border border-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-700">
+                  {count}
+                </span>
+              </div>
+            );
+          }
+          return null;
+        }}
         displayEventTime={false}
         height="auto"
         slotMinTime="06:00:00"

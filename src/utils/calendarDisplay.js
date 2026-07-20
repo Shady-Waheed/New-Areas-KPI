@@ -1,6 +1,6 @@
-import { getEventStyle } from './eventColors'
+import { getEventStyle, getEventColor } from "./eventColors";
 
-export const MAX_VISIBLE_PEOPLE_PER_DAY = 3
+export const MAX_VISIBLE_PEOPLE_PER_DAY = 3;
 
 /**
  * @param {import('../types').Event[]} events
@@ -8,20 +8,20 @@ export const MAX_VISIBLE_PEOPLE_PER_DAY = 3
  */
 export function groupEventsByDate(events) {
   /** @type {Record<string, import('../types').Event[]>} */
-  const grouped = {}
+  const grouped = {};
 
   events.forEach((event) => {
     if (!grouped[event.startDate]) {
-      grouped[event.startDate] = []
+      grouped[event.startDate] = [];
     }
-    grouped[event.startDate].push(event)
-  })
+    grouped[event.startDate].push(event);
+  });
 
   Object.values(grouped).forEach((dayEvents) => {
-    dayEvents.sort((a, b) => `${a.startTime}`.localeCompare(`${b.startTime}`))
-  })
+    dayEvents.sort((a, b) => `${a.startTime}`.localeCompare(`${b.startTime}`));
+  });
 
-  return grouped
+  return grouped;
 }
 
 /**
@@ -31,9 +31,9 @@ export function groupEventsByDate(events) {
  */
 export function getCalendarEventTitle(event, isPrivileged) {
   if (isPrivileged) {
-    return event.creatorName || event.createdByName || '—'
+    return event.creatorName || event.createdByName || "—";
   }
-  return event.title
+  return event.title;
 }
 
 /**
@@ -43,9 +43,9 @@ export function getCalendarEventTitle(event, isPrivileged) {
  * @param {(date: string, time: string) => string} toISODateTime
  */
 export function buildCalendarEvents(events, user, viewType, toISODateTime) {
-  const userId = user?.id || ''
-  const isPrivileged = user?.role === 'admin' || user?.role === 'host'
-  const isMonthView = viewType === 'dayGridMonth'
+  const userId = user?.id || "";
+  const isPrivileged = user?.role === "admin" || user?.role === "host";
+  const isMonthView = viewType === "dayGridMonth";
 
   if (!isPrivileged) {
     return events.map((event) => ({
@@ -55,7 +55,7 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
       end: toISODateTime(event.startDate, event.endTime),
       extendedProps: { eventData: event },
       ...getEventStyle(event, userId),
-    }))
+    }));
   }
 
   if (!isMonthView) {
@@ -66,12 +66,12 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
       end: toISODateTime(event.startDate, event.endTime),
       extendedProps: { eventData: event },
       ...getEventStyle(event, userId),
-    }))
+    }));
   }
 
-  const grouped = groupEventsByDate(events)
+  const grouped = groupEventsByDate(events);
   /** @type {object[]} */
-  const calendarEvents = []
+  const calendarEvents = [];
 
   Object.entries(grouped).forEach(([date, dayEvents]) => {
     if (dayEvents.length > MAX_VISIBLE_PEOPLE_PER_DAY) {
@@ -85,27 +85,37 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
           date,
           dayEvents,
         },
-        backgroundColor: '#5f6368',
-        borderColor: '#5f6368',
-        textColor: '#ffffff',
-        classNames: ['fc-day-summary-event'],
-      })
-      return
+        backgroundColor: "#5f6368",
+        borderColor: "#5f6368",
+        textColor: "#ffffff",
+        classNames: ["fc-day-summary-event"],
+      });
+      return;
     }
 
+    // Aggregate counts by event color for the month view so we render compact badges
+    const countsByColor = {};
     dayEvents.forEach((event) => {
-      calendarEvents.push({
-        id: event.id,
-        title: getCalendarEventTitle(event, true),
-        start: toISODateTime(event.startDate, event.startTime),
-        end: toISODateTime(event.startDate, event.endTime),
-        extendedProps: { eventData: event },
-        ...getEventStyle(event, userId),
-      })
-    })
-  })
+      const color = getEventColor(event, userId) || "unknown";
+      countsByColor[color] = (countsByColor[color] || 0) + 1;
+    });
 
-  return calendarEvents
+    Object.entries(countsByColor).forEach(([color, count], idx) => {
+      calendarEvents.push({
+        id: `day-color-${date}-${idx}`,
+        title: String(count),
+        start: date,
+        allDay: true,
+        extendedProps: { type: "color-count", color, count, date },
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        textColor: "#ffffff",
+        classNames: ["fc-day-color-count-event"],
+      });
+    });
+  });
+
+  return calendarEvents;
 }
 
 /**
@@ -116,5 +126,5 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
 export function getEventsForDate(events, date) {
   return events
     .filter((event) => event.startDate === date)
-    .sort((a, b) => `${a.startTime}`.localeCompare(`${b.startTime}`))
+    .sort((a, b) => `${a.startTime}`.localeCompare(`${b.startTime}`));
 }
