@@ -270,6 +270,27 @@ html.dark select option {
   flex-direction: column;
 }
 
+.fc .fc-daygrid-event-harness {
+  margin: 0.15rem 0;
+}
+
+.fc .fc-daygrid-event {
+  min-height: 1.6rem;
+  padding: 0.1rem 0.1rem;
+}
+
+.fc .fc-daygrid-event.fc-day-color-count-event {
+  border: none !important;
+  background: transparent !important;
+}
+
+.fc .fc-daygrid-event.fc-day-summary-event {
+  padding: 0.2rem 0.3rem;
+  border-radius: 9999px;
+  background-color: #495057 !important;
+  color: #fff !important;
+}
+
 .fc .fc-more-link {
   color: #1a73e8;
 }

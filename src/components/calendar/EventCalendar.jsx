@@ -324,6 +324,7 @@ export default function EventCalendar({
         selectAllow={(selectInfo) =>
           !isDateBeforeToday(toLocalDateString(selectInfo.start))
         }
+        eventDisplay="block"
         eventClick={handleEventClick}
         eventContent={(arg) => {
           const props = arg.event.extendedProps || {};
@@ -331,14 +332,12 @@ export default function EventCalendar({
             const color = props.color;
             const count = props.count;
             return (
-              <div className="flex items-center gap-2 p-1">
-                <span
-                  className="inline-block rounded-full"
-                  style={{ width: 8, height: 8, backgroundColor: color }}
-                />
-                <span className="text-[11px] px-2 rounded-md bg-white text-gray-900 border border-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-700">
-                  {count}
-                </span>
+              <div
+                className="flex items-center justify-center gap-2 rounded-full px-2 py-1 text-[11px] font-semibold shadow-sm dark:shadow-none"
+                style={{ backgroundColor: color, color: "#fff" }}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+                <span>{count}</span>
               </div>
             );
           }
