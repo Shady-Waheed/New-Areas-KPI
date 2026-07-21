@@ -298,17 +298,6 @@ export default function EventCalendar({
         <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
           Calendar
         </h2>
-        <Button
-          size="sm"
-          onClick={() => {
-            setPrefillDate(null);
-            setCreateOpen(true);
-          }}
-          className="w-full sm:w-auto"
-        >
-          <Plus size={16} />
-          New Event
-        </Button>
       </div>
 
       <EventColorLegend className="mb-4" compact />
@@ -405,6 +394,18 @@ export default function EventCalendar({
           setSelectedEvent(null);
         }}
       />
+
+      <button
+        type="button"
+        onClick={() => {
+          setPrefillDate(null);
+          setCreateOpen(true);
+        }}
+        className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-xl transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-white dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-300"
+        aria-label="Create Event"
+      >
+        <Plus size={24} />
+      </button>
     </div>
   );
 }
