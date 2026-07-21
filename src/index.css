@@ -275,8 +275,8 @@ html.dark select option {
 }
 
 .fc .fc-daygrid-event {
-  min-height: 1.6rem;
-  padding: 0.1rem 0.1rem;
+  min-height: 1.4rem;
+  padding: 0.08rem 0.1rem;
 }
 
 .fc .fc-daygrid-event.fc-day-color-count-event {
@@ -285,10 +285,30 @@ html.dark select option {
 }
 
 .fc .fc-daygrid-event.fc-day-summary-event {
-  padding: 0.2rem 0.3rem;
+  padding: 0.22rem 0.35rem;
   border-radius: 9999px;
   background-color: #495057 !important;
   color: #fff !important;
+}
+
+@media (max-width: 640px) {
+  .fc .fc-daygrid-day-frame {
+    min-height: 6.75rem;
+    padding: 0.35rem;
+  }
+
+  .fc .fc-daygrid-event {
+    min-height: 1.8rem;
+    padding: 0.06rem 0.1rem;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 0.95rem;
+  }
+
+  .fc .fc-daygrid-day-number {
+    font-size: 0.75rem;
+  }
 }
 
 .fc .fc-more-link {
