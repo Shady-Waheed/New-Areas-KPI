@@ -76,6 +76,12 @@ export default function ProfilePage() {
                 </>
               )}
             </div>
+            {user.responsibleHostName && (
+              <div className="mt-3 rounded-lg bg-gray-50 px-4 py-3 text-sm dark:bg-gray-800">
+                <p className="font-medium">Responsible Host</p>
+                <p>{user.responsibleHostName}</p>
+              </div>
+            )}
           </div>
         </div>
       </Card>

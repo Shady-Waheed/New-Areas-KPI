@@ -11,6 +11,8 @@
  * @property {boolean} approved
  * @property {boolean} hostApproved
  * @property {boolean} adminApproved
+ * @property {string} [responsibleHostId]
+ * @property {string} [responsibleHostName]
  * @property {boolean} disabled
  * @property {string} [photoURL]
  * @property {string} [fcmToken]

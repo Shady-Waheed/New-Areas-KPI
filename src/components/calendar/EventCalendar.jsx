@@ -233,10 +233,25 @@ export default function EventCalendar({
     }
 
     const dayEvents = getEventsForDate(events, info.dateStr);
-    if (isPrivileged && currentView === "dayGridMonth" && dayEvents.length) {
-      openDayPeopleModal(info.dateStr, dayEvents);
+    if (dayEvents.length) {
+      if (isPrivileged && currentView === "dayGridMonth") {
+        openDayPeopleModal(info.dateStr, dayEvents);
+      }
       return;
     }
+
+    const dayLabel = new Date(info.dateStr + "T00:00:00").toLocaleDateString(
+      "ar-EG",
+      {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      },
+    );
+    toast(`لا توجد أحداث في هذا اليوم: ${dayLabel}`, {
+      icon: "📅",
+    });
   };
 
   const handleEventClick = (info) => {

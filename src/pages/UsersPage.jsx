@@ -216,6 +216,11 @@ export default function UsersPage() {
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Joined {formatTimestamp(user.createdAt)}
               </p>
+              {user.responsibleHostName && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Responsible host: {user.responsibleHostName}
+                </p>
+              )}
               <UserActions
                 user={user}
                 currentUser={currentUser}
@@ -248,6 +253,9 @@ export default function UsersPage() {
                   Role
                 </th>
                 <th className="px-4 py-3 font-medium text-gray-600 lg:px-6 dark:text-gray-400">
+                  Host
+                </th>
+                <th className="px-4 py-3 font-medium text-gray-600 lg:px-6 dark:text-gray-400">
                   Status
                 </th>
                 <th className="px-4 py-3 font-medium text-gray-600 lg:px-6 dark:text-gray-400">
@@ -277,6 +285,9 @@ export default function UsersPage() {
                       actionLoading={actionLoading}
                       onRoleChange={handleRoleChange}
                     />
+                  </td>
+                  <td className="px-4 py-4 lg:px-6 text-gray-600 dark:text-gray-400">
+                    {user.responsibleHostName || "-"}
                   </td>
                   <td className="px-4 py-4 lg:px-6">
                     <UserStatusBadge user={user} />
