@@ -137,7 +137,7 @@ export default function UsersPage() {
     setActionLoading(user.id);
     try {
       if (currentUser?.role === "admin") {
-        await adminApproveUser(user.id, user.name);
+        await adminApproveUser(user.id, user.name, currentUser);
       } else if (currentUser?.role === "host") {
         await hostApproveUser(user.id, user.name, currentUser);
       } else {
@@ -283,10 +283,14 @@ export default function UsersPage() {
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
                   <td className="px-4 py-4 font-medium text-gray-900 lg:px-6 dark:text-gray-100">
-                    <div className="min-w-0 break-words text-sm">{user.name}</div>
+                    <div className="min-w-0 break-words text-sm">
+                      {user.name}
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-gray-600 lg:px-6 dark:text-gray-400">
-                    <div className="min-w-0 break-words text-sm">{user.email}</div>
+                    <div className="min-w-0 break-words text-sm">
+                      {user.email}
+                    </div>
                   </td>
                   <td className="px-4 py-4 lg:px-6">
                     <div className="min-w-[8rem] max-w-[12rem] text-sm">

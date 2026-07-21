@@ -100,16 +100,27 @@ async function notifyApprovedUser(userId, userName) {
   }
 }
 
-export async function adminApproveUser(userId, userName) {
+export async function adminApproveUser(userId, userName, approver) {
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
   if (!userDoc.exists()) throw new Error("User not found");
   const userData = userDoc.data();
-  const approved = userData.hostApproved === true;
+  const isHostUser = userData.role === "host";
+  const approved = isHostUser || userData.hostApproved === true;
 
-  await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
+  const updateData = {
     adminApproved: true,
     approved,
-  });
+  };
+
+  if (isHostUser) {
+    updateData.hostApproved = true;
+    if (approver) {
+      updateData.responsibleHostId = approver.id;
+      updateData.responsibleHostName = approver.name;
+    }
+  }
+
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), updateData);
 
   if (approved) {
     await notifyApprovedUser(userId, userName);
