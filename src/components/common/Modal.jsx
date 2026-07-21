@@ -38,14 +38,14 @@ export default function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${sizes[size]} max-h-[92vh] overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-xl dark:bg-gray-900`}
+        className={`relative w-full ${sizes[size]} max-h-[92vh] overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
