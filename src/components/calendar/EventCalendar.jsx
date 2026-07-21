@@ -333,13 +333,10 @@ export default function EventCalendar({
             const count = props.count;
             return (
               <div
-                className="flex max-w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/95 px-2 py-1 text-[11px] font-semibold text-slate-900 shadow-sm shadow-slate-200/40 dark:border-slate-700 dark:bg-slate-900/95 dark:text-white dark:shadow-none"
-                style={{ minWidth: 24 }}
+                className="flex max-w-full items-center justify-center gap-2 rounded-full px-2 py-1 text-[11px] font-semibold text-white shadow-sm dark:shadow-none"
+                style={{ backgroundColor: color, minWidth: 24 }}
               >
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
                 <span>{count}</span>
               </div>
             );
