@@ -35,8 +35,10 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
 
   if (!event) return null;
 
-  const canEdit = isEditor || isUserOwnEvent(event, user?.id || "");
-  const canComment = isEditor;
+  const canEdit =
+    user?.role !== "admin_readonly" &&
+    (isEditor || isUserOwnEvent(event, user?.id || ""));
+  const canComment = user?.role !== "admin_readonly" && isEditor;
   const canReadComments = canUserReadEventComments(
     event,
     user?.id || "",

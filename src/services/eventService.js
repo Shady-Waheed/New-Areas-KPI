@@ -24,15 +24,27 @@ function mergeEventLists(...lists) {
   return mergeAndSortEvents(lists.flat());
 }
 
+const PRIVILEGED_BROADCAST_ROLES = ["host", "admin", "admin_readonly"];
+
+function isPrivilegedBroadcastEvent(event) {
+  return (
+    event.audienceType === "everyone" &&
+    PRIVILEGED_BROADCAST_ROLES.includes(event.createdByRole)
+  );
+}
+
 /**
  * Subscribe to events visible for regular users:
  * - what they created
- * - what host/admin created on the calendar
+ * - what was created for them by host/admin
+ * - privileged broadcasts from host/admin
  * @param {import('../types').User} user
  * @param {(events: import('../types').Event[]) => void} callback
  * @returns {() => void}
  */
 function subscribeToUserVisibleEvents(user, callback) {
+  const responsibleHostId = user.responsibleHostId || null;
+
   const creatorQuery = query(
     collection(db, COLLECTIONS.EVENTS),
     where("creatorId", "==", user.id),
@@ -41,41 +53,53 @@ function subscribeToUserVisibleEvents(user, callback) {
     collection(db, COLLECTIONS.EVENTS),
     where("createdById", "==", user.id),
   );
-  const everyoneQuery = query(
+  const adminEveryoneQuery = query(
     collection(db, COLLECTIONS.EVENTS),
     where("audienceType", "==", "everyone"),
+    where("createdByRole", "in", ["admin", "admin_readonly"]),
   );
   const selectedQuery = query(
     collection(db, COLLECTIONS.EVENTS),
     where("audienceUserIds", "array-contains", user.id),
   );
+  const hostEveryoneQuery = responsibleHostId
+    ? query(
+        collection(db, COLLECTIONS.EVENTS),
+        where("audienceType", "==", "everyone"),
+        where("createdById", "==", responsibleHostId),
+      )
+    : null;
 
   const buckets = {
     creator: [],
     createdBy: [],
-    everyone: [],
+    adminEveryone: [],
     selected: [],
+    hostEveryone: [],
   };
   const ready = {
     creator: false,
     createdBy: false,
-    everyone: false,
+    adminEveryone: false,
     selected: false,
+    hostEveryone: responsibleHostId ? false : true,
   };
 
   const emit = () => {
     if (
       !ready.creator ||
       !ready.createdBy ||
-      !ready.everyone ||
-      !ready.selected
+      !ready.adminEveryone ||
+      !ready.selected ||
+      !ready.hostEveryone
     )
       return;
     callback(
       mergeEventLists(
         buckets.creator,
         buckets.createdBy,
-        buckets.everyone,
+        buckets.adminEveryone,
+        buckets.hostEveryone,
         buckets.selected,
       ),
     );
@@ -103,15 +127,37 @@ function subscribeToUserVisibleEvents(user, callback) {
 
   const unsubCreator = listen(creatorQuery, "creator");
   const unsubCreatedBy = listen(createdByQuery, "createdBy");
-  const unsubEveryone = listen(everyoneQuery, "everyone", true);
+  const unsubAdminEveryone = listen(adminEveryoneQuery, "adminEveryone", true);
   const unsubSelected = listen(selectedQuery, "selected", true);
+  const unsubHostEveryone = hostEveryoneQuery
+    ? listen(hostEveryoneQuery, "hostEveryone", true)
+    : () => {};
 
   return () => {
     unsubCreator();
     unsubCreatedBy();
-    unsubEveryone();
+    unsubAdminEveryone();
     unsubSelected();
+    unsubHostEveryone();
   };
+}
+
+function isHostVisibleEvent(event, hostId, assignedUserIds) {
+  if (event.createdById === hostId) return true;
+  if (event.creatorId === hostId) return true;
+  if (assignedUserIds.includes(event.creatorId)) return true;
+  if (
+    event.audienceType === "selected" &&
+    Array.isArray(event.audienceUserIds) &&
+    event.audienceUserIds.includes(hostId)
+  )
+    return true;
+  if (
+    event.audienceType === "everyone" &&
+    ["admin", "admin_readonly"].includes(event.createdByRole)
+  )
+    return true;
+  return false;
 }
 
 /**
@@ -126,7 +172,7 @@ export function subscribeToEvents(user, callback) {
   const isHost = user.role === "host";
   const isReadOnlyAdmin = user.role === "admin_readonly";
 
-  if (isAdmin || isHost || isReadOnlyAdmin) {
+  if (isAdmin || isReadOnlyAdmin) {
     return onSnapshot(
       collection(db, COLLECTIONS.EVENTS),
       (snapshot) => {
@@ -138,6 +184,45 @@ export function subscribeToEvents(user, callback) {
       },
       (error) => {
         console.error("All events listener:", error.code, error.message);
+        callback([]);
+      },
+    );
+  }
+
+  if (isHost) {
+    let assignedUserIds = [];
+    let latestEvents = [];
+
+    const emitHostEvents = () => {
+      callback(
+        mergeAndSortEvents(
+          latestEvents.filter((event) =>
+            isHostVisibleEvent(event, user.id, assignedUserIds),
+          ),
+        ),
+      );
+    };
+
+    getUsersByRole("user")
+      .then((users) => {
+        assignedUserIds = users
+          .filter((u) => u.responsibleHostId === user.id)
+          .map((u) => u.id);
+        emitHostEvents();
+      })
+      .catch(() => {
+        assignedUserIds = [];
+        emitHostEvents();
+      });
+
+    return onSnapshot(
+      collection(db, COLLECTIONS.EVENTS),
+      (snapshot) => {
+        latestEvents = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        emitHostEvents();
+      },
+      (error) => {
+        console.error("Host events listener:", error.code, error.message);
         callback([]);
       },
     );
