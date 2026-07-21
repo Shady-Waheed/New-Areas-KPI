@@ -240,6 +240,14 @@ export default function EventCalendar({
   };
 
   const handleEventClick = (info) => {
+    info.jsEvent?.stopPropagation?.();
+    info.jsEvent?.preventDefault?.();
+
+    // Skip color-count badges entirely
+    if (info.event.extendedProps?.type === "color-count") {
+      return;
+    }
+
     if (info.event.extendedProps?.isOfficialHoliday) {
       return;
     }
@@ -333,7 +341,7 @@ export default function EventCalendar({
             const count = props.count;
             return (
               <div
-                className="inline-flex min-h-[1.8rem] min-w-[1.8rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold text-white shadow-sm dark:shadow-none"
+                className="pointer-events-none inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-sm dark:shadow-none"
                 style={{ backgroundColor: color }}
               >
                 {count}
