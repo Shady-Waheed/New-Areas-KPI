@@ -124,8 +124,9 @@ function subscribeToUserVisibleEvents(user, callback) {
 export function subscribeToEvents(user, callback) {
   const isAdmin = user.role === "admin";
   const isHost = user.role === "host";
+  const isReadOnlyAdmin = user.role === "admin_readonly";
 
-  if (isAdmin || isHost) {
+  if (isAdmin || isHost || isReadOnlyAdmin) {
     return onSnapshot(
       collection(db, COLLECTIONS.EVENTS),
       (snapshot) => {
@@ -161,6 +162,10 @@ export async function getEvent(eventId) {
  * @returns {Promise<string>}
  */
 export async function createEvent(data, currentUser) {
+  if (currentUser.role === "admin_readonly") {
+    throw new Error("Read-only admins cannot create events");
+  }
+
   const eventData = {
     title: data.title,
     area: data.area,
@@ -197,11 +202,12 @@ export async function createEvent(data, currentUser) {
     }
 
     if (currentUser.role === "user") {
-      const [admins, hosts] = await Promise.all([
+      const [admins, hosts, readOnlyAdmins] = await Promise.all([
         getUsersByRole("admin"),
         getUsersByRole("host"),
+        getUsersByRole("admin_readonly"),
       ]);
-      const privilegedIds = [...admins, ...hosts]
+      const privilegedIds = [...admins, ...hosts, ...readOnlyAdmins]
         .filter((u) => !u.disabled && u.approved && u.id !== currentUser.id)
         .map((u) => u.id);
 

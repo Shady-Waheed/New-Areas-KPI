@@ -1,16 +1,17 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
   where,
-} from 'firebase/firestore'
-import { db } from '../firebase/config'
-import { COLLECTIONS } from '../utils/constants'
-import { createNotification } from './notificationService'
+} from "firebase/firestore";
+import { db } from "../firebase/config";
+import { COLLECTIONS } from "../utils/constants";
+import { createNotification } from "./notificationService";
 
 /**
  * @param {import('../types').User[]} users
@@ -18,10 +19,10 @@ import { createNotification } from './notificationService'
  */
 function sortUsersByCreatedAt(users) {
   return [...users].sort((a, b) => {
-    const aTime = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds ?? 0
-    const bTime = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds ?? 0
-    return bTime - aTime
-  })
+    const aTime = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds ?? 0;
+    const bTime = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds ?? 0;
+    return bTime - aTime;
+  });
 }
 
 /**
@@ -35,16 +36,16 @@ export function subscribeToUserProfile(userId, callback) {
     doc(db, COLLECTIONS.USERS, userId),
     (snapshot) => {
       if (!snapshot.exists()) {
-        callback(null)
-        return
+        callback(null);
+        return;
       }
-      callback({ id: snapshot.id, ...snapshot.data() })
+      callback({ id: snapshot.id, ...snapshot.data() });
     },
     (error) => {
-      console.error('User profile listener error:', error.code, error.message)
-      callback(null)
-    }
-  )
+      console.error("User profile listener error:", error.code, error.message);
+      callback(null);
+    },
+  );
 }
 
 /**
@@ -56,13 +57,17 @@ export function subscribeToUsers(callback) {
   return onSnapshot(
     collection(db, COLLECTIONS.USERS),
     (snapshot) => {
-      callback(sortUsersByCreatedAt(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      callback(
+        sortUsersByCreatedAt(
+          snapshot.docs.map((d) => ({ id: d.id, ...d.data() })),
+        ),
+      );
     },
     (error) => {
-      console.error('Users listener error:', error.code, error.message)
-      callback([])
-    }
-  )
+      console.error("Users listener error:", error.code, error.message);
+      callback([]);
+    },
+  );
 }
 
 /**
@@ -70,8 +75,10 @@ export function subscribeToUsers(callback) {
  * @returns {Promise<import('../types').User[]>}
  */
 export async function getAllUsers() {
-  const snapshot = await getDocs(collection(db, COLLECTIONS.USERS))
-  return sortUsersByCreatedAt(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })))
+  const snapshot = await getDocs(collection(db, COLLECTIONS.USERS));
+  return sortUsersByCreatedAt(
+    snapshot.docs.map((d) => ({ id: d.id, ...d.data() })),
+  );
 }
 
 /**
@@ -79,19 +86,51 @@ export async function getAllUsers() {
  * @param {string} userId
  * @param {string} userName
  */
-export async function approveUser(userId, userName) {
-  await updateDoc(doc(db, COLLECTIONS.USERS, userId), { approved: true })
-
+async function notifyApprovedUser(userId, userName) {
   try {
     await createNotification({
       userId,
-      title: 'Account Approved',
+      title: "Account Approved",
       message: `Welcome ${userName}! Your account has been approved. You can now access the application.`,
-      type: 'approval',
-    })
+      type: "approval",
+    });
   } catch (error) {
-    console.error('Approval notification failed:', error)
-    throw new Error('User approved but notification failed to send')
+    console.error("Approval notification failed:", error);
+    throw new Error("User approved but notification failed to send");
+  }
+}
+
+export async function adminApproveUser(userId, userName) {
+  const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
+  if (!userDoc.exists()) throw new Error("User not found");
+  const userData = userDoc.data();
+  const approved = userData.hostApproved === true;
+
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
+    adminApproved: true,
+    approved,
+  });
+
+  if (approved) {
+    await notifyApprovedUser(userId, userName);
+  }
+}
+
+export async function hostApproveUser(userId, userName, host) {
+  const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
+  if (!userDoc.exists()) throw new Error("User not found");
+  const userData = userDoc.data();
+  const approved = userData.adminApproved === true;
+
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
+    hostApproved: true,
+    responsibleHostId: host.id,
+    responsibleHostName: host.name,
+    approved,
+  });
+
+  if (approved) {
+    await notifyApprovedUser(userId, userName);
   }
 }
 
@@ -101,7 +140,7 @@ export async function approveUser(userId, userName) {
  * @param {import('../types').UserRole} role
  */
 export async function changeUserRole(userId, role) {
-  await updateDoc(doc(db, COLLECTIONS.USERS, userId), { role })
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), { role });
 }
 
 /**
@@ -110,7 +149,7 @@ export async function changeUserRole(userId, role) {
  * @param {boolean} disabled
  */
 export async function toggleUserDisabled(userId, disabled) {
-  await updateDoc(doc(db, COLLECTIONS.USERS, userId), { disabled })
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), { disabled });
 }
 
 /**
@@ -119,7 +158,7 @@ export async function toggleUserDisabled(userId, disabled) {
  * @param {Partial<import('../types').User>} data
  */
 export async function updateUserProfile(userId, data) {
-  await updateDoc(doc(db, COLLECTIONS.USERS, userId), data)
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), data);
 }
 
 /**
@@ -131,7 +170,7 @@ export async function saveFCMToken(userId, token) {
   await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
     fcmToken: token,
     fcmTokenUpdatedAt: serverTimestamp(),
-  })
+  });
 }
 
 /**
@@ -140,7 +179,7 @@ export async function saveFCMToken(userId, token) {
  * @returns {Promise<import('../types').User[]>}
  */
 export async function getUsersByRole(role) {
-  const q = query(collection(db, COLLECTIONS.USERS), where('role', '==', role))
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+  const q = query(collection(db, COLLECTIONS.USERS), where("role", "==", role));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

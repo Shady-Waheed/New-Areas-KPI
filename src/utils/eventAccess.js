@@ -12,7 +12,11 @@ export function isUserOwnEvent(event, userId) {
  * @returns {boolean}
  */
 export function isLeadershipEvent(event) {
-  return event.createdByRole === "host" || event.createdByRole === "admin";
+  return (
+    event.createdByRole === "host" ||
+    event.createdByRole === "admin" ||
+    event.createdByRole === "admin_readonly"
+  );
 }
 
 /**

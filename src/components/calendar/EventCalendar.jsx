@@ -49,7 +49,7 @@ export default function EventCalendar({
   missingOpenEventId,
   onOpenEventHandled,
 }) {
-  const { user, isPrivileged } = useAuth();
+  const { user, isPrivileged, isReadOnlyAdmin } = useAuth();
   const calendarRef = useRef(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -273,6 +273,11 @@ export default function EventCalendar({
   const handleCreate = async (data) => {
     if (!user) return;
 
+    if (user.role === "admin_readonly") {
+      toast.error("Read-only admins cannot create events");
+      return;
+    }
+
     if (isDateBeforeToday(data.startDate)) {
       toast.error("لا يمكن إضافة حدث قبل اليوم الحالي");
       return;
@@ -395,17 +400,19 @@ export default function EventCalendar({
         }}
       />
 
-      <button
-        type="button"
-        onClick={() => {
-          setPrefillDate(null);
-          setCreateOpen(true);
-        }}
-        className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-xl transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-white dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-300"
-        aria-label="Create Event"
-      >
-        <Plus size={24} />
-      </button>
+      {user?.role !== "admin_readonly" && (
+        <button
+          type="button"
+          onClick={() => {
+            setPrefillDate(null);
+            setCreateOpen(true);
+          }}
+          className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-xl transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-white dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-300"
+          aria-label="Create Event"
+        >
+          <Plus size={24} />
+        </button>
+      )}
     </div>
   );
 }

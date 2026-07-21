@@ -12,7 +12,12 @@ service cloud.firestore {
     }
 
     function isApproved() {
-      return isAuthenticated() && getUserData().approved == true && getUserData().disabled != true;
+      let userData = getUserData();
+      return isAuthenticated() &&
+        userData.approved == true &&
+        userData.disabled != true &&
+        (!('adminApproved' in userData) || userData.adminApproved == true) &&
+        (!('hostApproved' in userData) || userData.hostApproved == true);
     }
 
     function isAdmin() {
@@ -23,7 +28,15 @@ service cloud.firestore {
       return isApproved() && getUserData().role == 'host';
     }
 
+    function isReadOnlyAdmin() {
+      return isApproved() && getUserData().role == 'admin_readonly';
+    }
+
     function isPrivileged() {
+      return isAdmin() || isHost() || isReadOnlyAdmin();
+    }
+
+    function isEditor() {
       return isAdmin() || isHost();
     }
 
@@ -52,16 +65,19 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (
         request.auth.uid == userId ||
         isPrivileged() ||
-        (isApproved() && resource.data.role in ['admin', 'host'])
+        (isApproved() && resource.data.role in ['admin', 'host', 'admin_readonly'])
       );
       allow create: if isAuthenticated()
         && request.auth.uid == userId
         && request.resource.data.role == 'user'
         && request.resource.data.approved == false
+        && request.resource.data.hostApproved == false
+        && request.resource.data.adminApproved == false
         && request.resource.data.disabled == false;
       allow update: if isAuthenticated() && (
-        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'approved', 'disabled'])) ||
-        isPrivileged()
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'approved', 'hostApproved', 'adminApproved', 'disabled'])) ||
+        (isAdmin()) ||
+        (isHost() && resource.data.role == 'user')
       );
       allow delete: if isAdmin();
     }
@@ -69,18 +85,19 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if isApproved() && (isPrivileged() || canUserReadEvent());
       allow create: if isApproved()
+        && getUserData().role != 'admin_readonly'
         && request.resource.data.createdById == request.auth.uid
         && request.resource.data.createdByRole == getUserData().role
         && request.resource.data.audienceType in ['everyone', 'selected', 'only-me']
         && request.resource.data.audienceUserIds is list;
       allow update, delete: if isApproved() && (
-        isPrivileged() || resource.data.creatorId == request.auth.uid
+        isEditor() || (resource.data.creatorId == request.auth.uid && !isReadOnlyAdmin())
       );
     }
 
     match /comments/{commentId} {
       allow read: if isApproved();
-      allow create: if isApproved() && isPrivileged();
+      allow create: if isApproved() && isEditor();
       allow update, delete: if isAdmin();
     }
 

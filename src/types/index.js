@@ -1,5 +1,5 @@
 /**
- * @typedef {'user' | 'host' | 'admin'} UserRole
+ * @typedef {'user' | 'host' | 'admin' | 'admin_readonly'} UserRole
  */
 
 /**
@@ -9,6 +9,8 @@
  * @property {string} email
  * @property {UserRole} role
  * @property {boolean} approved
+ * @property {boolean} hostApproved
+ * @property {boolean} adminApproved
  * @property {boolean} disabled
  * @property {string} [photoURL]
  * @property {string} [fcmToken]

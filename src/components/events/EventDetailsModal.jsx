@@ -29,14 +29,14 @@ import { Pencil, Trash2 } from "lucide-react";
  * }} props
  */
 export default function EventDetailsModal({ event, isOpen, onClose }) {
-  const { user, isPrivileged } = useAuth();
+  const { user, isEditor, isPrivileged } = useAuth();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!event) return null;
 
-  const canEdit = isPrivileged || isUserOwnEvent(event, user?.id || "");
-  const canComment = isPrivileged;
+  const canEdit = isEditor || isUserOwnEvent(event, user?.id || "");
+  const canComment = isEditor;
   const canReadComments = canUserReadEventComments(
     event,
     user?.id || "",

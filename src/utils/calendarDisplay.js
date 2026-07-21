@@ -44,7 +44,10 @@ export function getCalendarEventTitle(event, isPrivileged) {
  */
 export function buildCalendarEvents(events, user, viewType, toISODateTime) {
   const userId = user?.id || "";
-  const isPrivileged = user?.role === "admin" || user?.role === "host";
+  const isPrivileged =
+    user?.role === "admin" ||
+    user?.role === "host" ||
+    user?.role === "admin_readonly";
   const isMonthView = viewType === "dayGridMonth";
 
   if (!isPrivileged) {
