@@ -407,14 +407,61 @@ html.dark select option {
   -webkit-overflow-scrolling: touch;
 }
 
+.users-table {
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
 .users-table th,
 .users-table td {
   white-space: normal;
+  padding: 0.75rem 0.9rem;
+}
+
+.users-table th {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .users-table td > div,
 .users-table th {
   min-height: 1.75rem;
+}
+
+.users-table td select {
+  width: 100%;
+}
+
+@media (max-width: 1023px) {
+  .users-table th,
+  .users-table td {
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .users-table {
+    min-width: unset;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: 0.65rem 0.6rem;
+    font-size: 0.825rem;
+  }
+
+  .users-table th:last-child,
+  .users-table td:last-child {
+    display: none;
+  }
+
+  .users-table th:nth-child(4),
+  .users-table td:nth-child(4),
+  .users-table th:nth-child(5),
+  .users-table td:nth-child(5) {
+    display: none;
+  }
 }
 
 /* Auth pages */
