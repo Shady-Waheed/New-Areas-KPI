@@ -4,7 +4,7 @@
  * @returns {boolean}
  */
 export function isUserOwnEvent(event, userId) {
-  return event.creatorId === userId || event.createdById === userId
+  return event.creatorId === userId || event.createdById === userId;
 }
 
 /**
@@ -12,7 +12,7 @@ export function isUserOwnEvent(event, userId) {
  * @returns {boolean}
  */
 export function isLeadershipEvent(event) {
-  return event.createdByRole === 'host' || event.createdByRole === 'admin'
+  return event.createdByRole === "host" || event.createdByRole === "admin";
 }
 
 /**
@@ -22,7 +22,16 @@ export function isLeadershipEvent(event) {
  * @returns {boolean}
  */
 export function canUserViewEvent(event, userId) {
-  return isUserOwnEvent(event, userId) || isLeadershipEvent(event)
+  if (!event || !userId) return false;
+  if (isUserOwnEvent(event, userId)) return true;
+  if (event.audienceType === "everyone") return true;
+  if (
+    event.audienceType === "selected" &&
+    Array.isArray(event.audienceUserIds)
+  ) {
+    return event.audienceUserIds.includes(userId);
+  }
+  return false;
 }
 
 /**
@@ -32,8 +41,8 @@ export function canUserViewEvent(event, userId) {
  * @returns {boolean}
  */
 export function canUserReadEventComments(event, userId, isPrivileged) {
-  if (isPrivileged) return true
-  return canUserViewEvent(event, userId)
+  if (isPrivileged) return true;
+  return canUserViewEvent(event, userId);
 }
 
 /**
@@ -41,11 +50,11 @@ export function canUserReadEventComments(event, userId, isPrivileged) {
  * @returns {import('../types').Event[]}
  */
 export function mergeAndSortEvents(events) {
-  const map = new Map()
-  events.forEach((event) => map.set(event.id, event))
+  const map = new Map();
+  events.forEach((event) => map.set(event.id, event));
   return [...map.values()].sort((a, b) => {
-    const aKey = `${a.startDate}T${a.startTime}`
-    const bKey = `${b.startDate}T${b.startTime}`
-    return aKey.localeCompare(bKey)
-  })
+    const aKey = `${a.startDate}T${a.startTime}`;
+    const bKey = `${b.startDate}T${b.startTime}`;
+    return aKey.localeCompare(bKey);
+  });
 }

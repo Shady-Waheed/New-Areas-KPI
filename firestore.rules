@@ -30,14 +30,18 @@ service cloud.firestore {
     function canUserReadEvent() {
       return resource.data.creatorId == request.auth.uid ||
         resource.data.createdById == request.auth.uid ||
-        resource.data.createdByRole in ['host', 'admin'];
+        resource.data.audienceType == 'everyone' ||
+        (resource.data.audienceType == 'selected' &&
+          request.auth.uid in resource.data.audienceUserIds);
     }
 
     function canUserReadEventComments(eventId) {
       let event = getEventData(eventId);
       return event.creatorId == request.auth.uid ||
         event.createdById == request.auth.uid ||
-        event.createdByRole in ['host', 'admin'];
+        event.audienceType == 'everyone' ||
+        (event.audienceType == 'selected' &&
+          request.auth.uid in event.audienceUserIds);
     }
 
     function getEventData(eventId) {
@@ -63,10 +67,12 @@ service cloud.firestore {
     }
 
     match /events/{eventId} {
-      allow read: if isApproved();
+      allow read: if isApproved() && (isPrivileged() || canUserReadEvent());
       allow create: if isApproved()
         && request.resource.data.createdById == request.auth.uid
-        && request.resource.data.createdByRole == getUserData().role;
+        && request.resource.data.createdByRole == getUserData().role
+        && request.resource.data.audienceType in ['everyone', 'selected', 'only-me']
+        && request.resource.data.audienceUserIds is list;
       allow update, delete: if isApproved() && (
         isPrivileged() || resource.data.creatorId == request.auth.uid
       );

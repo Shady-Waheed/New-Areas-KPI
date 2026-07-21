@@ -73,6 +73,8 @@
  * @property {string} endTime
  * @property {string} [creatorId]
  * @property {'my_supervision' | 'volunteer' | 'none'} supervisionType
+ * @property {'everyone' | 'selected' | 'only-me'} [audienceType]
+ * @property {string[]} [audienceUserIds]
  */
 
-export {}
+export {};
