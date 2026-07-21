@@ -160,23 +160,23 @@ export default function EventForm({
       {(user?.role === "admin" || user?.role === "host") && (
         <div className="space-y-4">
           <Select
-            label="مرئي لـ"
-            placeholder="اختر الجمهور"
+            label="Visible To"
+            placeholder="Select audience"
             error={errors.audienceType?.message}
             register={register("audienceType", {
-              required: "اختيار الجمهور مطلوب",
+              required: "Audience selection is required",
             })}
             options={[
-              { value: "everyone", label: "الجميع" },
-              { value: "selected", label: "أشخاص محددون" },
-              { value: "only-me", label: "أنا فقط" },
+              { value: "everyone", label: "Everyone" },
+              { value: "selected", label: "Specific people" },
+              { value: "only-me", label: "Only me" },
             ]}
           />
 
           {audienceType === "selected" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                اختر المستخدمين
+                Select Users
               </label>
               <select
                 multiple
@@ -184,7 +184,7 @@ export default function EventForm({
                 {...register("audienceUserIds")}
               >
                 {loadingAudienceUsers && (
-                  <option disabled>جارٍ تحميل المستخدمين...</option>
+                  <option disabled>Loading users...</option>
                 )}
                 {audienceUsers.map((audienceUser) => (
                   <option key={audienceUser.id} value={audienceUser.id}>
@@ -192,9 +192,6 @@ export default function EventForm({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                اختر مستخدمًا واحدًا أو أكثر لتلقي هذا الحدث.
-              </p>
             </div>
           )}
         </div>
