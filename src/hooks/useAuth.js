@@ -86,7 +86,8 @@ export function useAuth() {
   const isPrivileged = isEditor || isReadOnlyAdmin;
   const isAdminApproved = user?.adminApproved === true;
   const isHostApproved = user?.hostApproved === true;
-  const isApproved = user?.approved === true;
+  const isApproved =
+    user?.approved === true || (isAdminApproved && isHostApproved);
 
   return {
     user,

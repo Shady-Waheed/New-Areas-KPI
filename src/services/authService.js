@@ -58,11 +58,11 @@ export async function registerUser(data) {
  * @param {{ email: string, password: string }} data
  * @returns {Promise<import('../types').User>}
  */
-export async function loginUser(data) {
+export async function loginUser(credentials) {
   const credential = await signInWithEmailAndPassword(
     auth,
-    data.email,
-    data.password,
+    credentials.email,
+    credentials.password,
   );
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, credential.user.uid));
 
@@ -70,7 +70,12 @@ export async function loginUser(data) {
     throw new Error("User profile not found");
   }
 
-  return { id: userDoc.id, ...userDoc.data() };
+  const userData = userDoc.data();
+  const approved =
+    userData.approved === true ||
+    (userData.adminApproved === true && userData.hostApproved === true);
+
+  return { id: userDoc.id, ...userData, approved };
 }
 
 /**
@@ -81,7 +86,13 @@ export async function loginUser(data) {
 export async function getUserProfile(userId) {
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
   if (!userDoc.exists()) return null;
-  return { id: userDoc.id, ...userDoc.data() };
+
+  const userData = userDoc.data();
+  const approved =
+    userData.approved === true ||
+    (userData.adminApproved === true && userData.hostApproved === true);
+
+  return { id: userDoc.id, ...userData, approved };
 }
 
 /**

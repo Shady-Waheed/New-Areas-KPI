@@ -13,11 +13,10 @@ service cloud.firestore {
 
     function isApproved() {
       let userData = getUserData();
+      let approvedByFlags = userData.adminApproved == true && userData.hostApproved == true;
       return isAuthenticated() &&
-        userData.approved == true &&
-        userData.disabled != true &&
-        (!('adminApproved' in userData) || userData.adminApproved == true) &&
-        (!('hostApproved' in userData) || userData.hostApproved == true);
+        (userData.approved == true || approvedByFlags) &&
+        userData.disabled != true;
     }
 
     function isAdmin() {
