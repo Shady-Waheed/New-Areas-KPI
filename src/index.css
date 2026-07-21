@@ -407,6 +407,16 @@ html.dark select option {
   -webkit-overflow-scrolling: touch;
 }
 
+.users-table th,
+.users-table td {
+  white-space: normal;
+}
+
+.users-table td > div,
+.users-table th {
+  min-height: 1.75rem;
+}
+
 /* Auth pages */
 .auth-card-wrap {
   width: 100%;

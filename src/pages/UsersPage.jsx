@@ -84,7 +84,7 @@ function UserRoleCell({ user, currentUser, actionLoading, onRoleChange }) {
         value={user.role}
         onChange={(e) => onRoleChange(user.id, e.target.value)}
         disabled={actionLoading === user.id}
-        className="w-full max-w-[8rem] rounded border border-gray-300 bg-white px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-800"
+        className="w-full max-w-[10rem] rounded border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
       >
         {ROLES.map((r) => (
           <option key={r} value={r}>
@@ -188,7 +188,7 @@ export default function UsersPage() {
           value={search}
           onChange={setSearch}
           placeholder="Search users..."
-          className="w-full sm:max-w-xs"
+          className="w-full sm:max-w-sm"
         />
       </div>
 
@@ -197,29 +197,39 @@ export default function UsersPage() {
           <Card key={user.id} className="p-4">
             <div className="space-y-3">
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
+                <p className="font-medium text-gray-900 dark:text-gray-100 break-words">
                   {user.name}
                 </p>
                 <p className="mt-0.5 break-all text-sm text-gray-500 dark:text-gray-400">
                   {user.email}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <UserRoleCell
-                  user={user}
-                  currentUser={currentUser}
-                  actionLoading={actionLoading}
-                  onRoleChange={handleRoleChange}
-                />
-                <UserStatusBadge user={user} />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    Role
+                  </span>
+                  <UserRoleCell
+                    user={user}
+                    currentUser={currentUser}
+                    actionLoading={actionLoading}
+                    onRoleChange={handleRoleChange}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    Status
+                  </span>
+                  <UserStatusBadge user={user} />
+                </div>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Joined {formatTimestamp(user.createdAt)}
-              </p>
+              </div>
               {user.responsibleHostName && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   Responsible host: {user.responsibleHostName}
-                </p>
+                </div>
               )}
               <UserActions
                 user={user}
@@ -240,7 +250,7 @@ export default function UsersPage() {
 
       <Card className="hidden overflow-hidden p-0 md:block">
         <div className="table-responsive">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[720px] text-left text-sm users-table">
             <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
               <tr>
                 <th className="px-4 py-3 font-medium text-gray-600 lg:px-6 dark:text-gray-400">
@@ -273,36 +283,44 @@ export default function UsersPage() {
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
                   <td className="px-4 py-4 font-medium text-gray-900 lg:px-6 dark:text-gray-100">
-                    {user.name}
+                    <div className="min-w-0 break-words text-sm">{user.name}</div>
                   </td>
                   <td className="px-4 py-4 text-gray-600 lg:px-6 dark:text-gray-400">
-                    {user.email}
+                    <div className="min-w-0 break-words text-sm">{user.email}</div>
                   </td>
                   <td className="px-4 py-4 lg:px-6">
-                    <UserRoleCell
-                      user={user}
-                      currentUser={currentUser}
-                      actionLoading={actionLoading}
-                      onRoleChange={handleRoleChange}
-                    />
+                    <div className="min-w-[8rem] max-w-[12rem] text-sm">
+                      <UserRoleCell
+                        user={user}
+                        currentUser={currentUser}
+                        actionLoading={actionLoading}
+                        onRoleChange={handleRoleChange}
+                      />
+                    </div>
                   </td>
                   <td className="px-4 py-4 lg:px-6 text-gray-600 dark:text-gray-400">
-                    {user.responsibleHostName || "-"}
+                    <div className="min-w-0 text-sm break-words">
+                      {user.responsibleHostName || "-"}
+                    </div>
                   </td>
                   <td className="px-4 py-4 lg:px-6">
-                    <UserStatusBadge user={user} />
+                    <div className="min-w-[8rem] text-sm">
+                      <UserStatusBadge user={user} />
+                    </div>
                   </td>
-                  <td className="px-4 py-4 text-xs text-gray-500 lg:px-6 dark:text-gray-400">
+                  <td className="px-4 py-4 text-sm text-gray-500 lg:px-6 dark:text-gray-400">
                     {formatTimestamp(user.createdAt)}
                   </td>
                   <td className="px-4 py-4 lg:px-6">
-                    <UserActions
-                      user={user}
-                      currentUser={currentUser}
-                      actionLoading={actionLoading}
-                      onApprove={handleApprove}
-                      onToggleDisabled={handleToggleDisabled}
-                    />
+                    <div className="min-w-[10rem]">
+                      <UserActions
+                        user={user}
+                        currentUser={currentUser}
+                        actionLoading={actionLoading}
+                        onApprove={handleApprove}
+                        onToggleDisabled={handleToggleDisabled}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
