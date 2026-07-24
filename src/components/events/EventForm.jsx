@@ -130,17 +130,14 @@ export default function EventForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Select
           label="الكود"
-          placeholder="Select code"
+          placeholder="لا يوجد كود"
           error={errors.activityCode?.message}
           register={register("activityCode")}
-          options={[
-            { value: "", label: "لا يوجد كود" },
-            ...getActivityCodeOptions(),
-          ]}
+          options={getActivityCodeOptions()}
         />
         <Select
           label="النشاط"
-          placeholder="1 - 15"
+          placeholder="لا يوجد نشاط"
           error={errors.activityName?.message}
           register={register("activityName", {
             validate: (value) => {
@@ -148,10 +145,7 @@ export default function EventForm({
               return validateActivityNumber(value);
             },
           })}
-          options={[
-            { value: "", label: "لا يوجد نشاط" },
-            ...getActivityNumberOptions(),
-          ]}
+          options={getActivityNumberOptions()}
         />
       </div>
 
