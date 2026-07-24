@@ -286,16 +286,25 @@ export async function createEvent(data, currentUser) {
       });
     }
 
-    if (currentUser.role === "user") {
-      const [admins, hosts, readOnlyAdmins] = await Promise.all([
-        getUsersByRole("admin"),
-        getUsersByRole("host"),
-        getUsersByRole("admin_readonly"),
-      ]);
-      const privilegedIds = [...admins, ...hosts, ...readOnlyAdmins]
-        .filter((u) => !u.disabled && u.approved && u.id !== currentUser.id)
-        .map((u) => u.id);
+    const [admins, hosts, readOnlyAdmins] = await Promise.all([
+      getUsersByRole("admin"),
+      getUsersByRole("host"),
+      getUsersByRole("admin_readonly"),
+    ]);
+    const privilegedIds = [...admins, ...hosts, ...readOnlyAdmins]
+      .filter((u) => !u.disabled && u.approved && u.id !== currentUser.id)
+      .map((u) => u.id);
 
+    if (privilegedIds.length) {
+      await notifyUsers(privilegedIds, {
+        title: "New Event Added",
+        message: `${eventData.creatorName} has a new event: "${eventData.title}"`,
+        type: "event",
+        eventId: docRef.id,
+      });
+    }
+
+    if (currentUser.role === "user") {
       if (privilegedIds.length) {
         await notifyUsers(privilegedIds, {
           title: "New Event",

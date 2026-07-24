@@ -5,10 +5,11 @@ import {
   query,
   serverTimestamp,
   where,
-} from 'firebase/firestore'
-import { db } from '../firebase/config'
-import { COLLECTIONS } from '../utils/constants'
-import { createNotification } from './notificationService'
+} from "firebase/firestore";
+import { db } from "../firebase/config";
+import { COLLECTIONS } from "../utils/constants";
+import { createNotification } from "./notificationService";
+import { getUsersByRole } from "./userService";
 
 /**
  * @param {import('../types').Comment[]} comments
@@ -16,10 +17,10 @@ import { createNotification } from './notificationService'
  */
 function sortComments(comments) {
   return [...comments].sort((a, b) => {
-    const aTime = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds ?? 0
-    const bTime = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds ?? 0
-    return aTime - bTime
-  })
+    const aTime = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds ?? 0;
+    const bTime = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds ?? 0;
+    return aTime - bTime;
+  });
 }
 
 /**
@@ -31,22 +32,22 @@ function sortComments(comments) {
 export function subscribeToComments(eventId, callback) {
   const q = query(
     collection(db, COLLECTIONS.COMMENTS),
-    where('eventId', '==', eventId)
-  )
+    where("eventId", "==", eventId),
+  );
 
   return onSnapshot(
     q,
     (snapshot) => {
       const comments = sortComments(
-        snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
-      )
-      callback(comments)
+        snapshot.docs.map((d) => ({ id: d.id, ...d.data() })),
+      );
+      callback(comments);
     },
     (error) => {
-      console.error('Comments listener error:', error.code, error.message)
-      callback([])
-    }
-  )
+      console.error("Comments listener error:", error.code, error.message);
+      callback([]);
+    },
+  );
 }
 
 /**
@@ -60,19 +61,47 @@ export async function addComment(data) {
     userName: data.userName,
     text: data.text,
     createdAt: serverTimestamp(),
-  })
+  });
 
   if (data.creatorId !== data.userId) {
     try {
       await createNotification({
         userId: data.creatorId,
-        title: 'New Comment',
+        title: "New Comment",
         message: `${data.userName} commented on "${data.eventTitle}"`,
-        type: 'comment',
+        type: "comment",
         eventId: data.eventId,
-      })
+      });
     } catch (error) {
-      console.warn('Comment notification failed:', error)
+      console.warn("Comment notification failed:", error);
     }
+  }
+
+  try {
+    const [admins, hosts, readOnlyAdmins] = await Promise.all([
+      getUsersByRole("admin"),
+      getUsersByRole("host"),
+      getUsersByRole("admin_readonly"),
+    ]);
+
+    const recipients = [...admins, ...hosts, ...readOnlyAdmins].filter(
+      (user) => user.approved && !user.disabled && user.id !== data.userId,
+    );
+
+    if (recipients.length) {
+      await Promise.all(
+        recipients.map((recipient) =>
+          createNotification({
+            userId: recipient.id,
+            title: "New Comment Added",
+            message: `${data.userName} commented on "${data.eventTitle}"`,
+            type: "comment",
+            eventId: data.eventId,
+          }),
+        ),
+      );
+    }
+  } catch (error) {
+    console.warn("Comment broadcast notification failed:", error);
   }
 }

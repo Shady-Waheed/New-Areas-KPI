@@ -100,6 +100,38 @@ async function notifyApprovedUser(userId, userName) {
   }
 }
 
+async function notifyAdminsAndHostsAboutApproval(
+  userId,
+  userName,
+  approverName,
+) {
+  try {
+    const [admins, hosts] = await Promise.all([
+      getUsersByRole("admin"),
+      getUsersByRole("host"),
+    ]);
+    const recipients = [...admins, ...hosts].filter(
+      (user) =>
+        user.id && user.approved && !user.disabled && user.id !== userId,
+    );
+
+    if (!recipients.length) return;
+
+    await Promise.all(
+      recipients.map((recipient) =>
+        createNotification({
+          userId: recipient.id,
+          title: "User Approval Update",
+          message: `${userName} was approved by ${approverName}.`,
+          type: "users",
+        }),
+      ),
+    );
+  } catch (error) {
+    console.warn("Approval broadcast notification failed:", error);
+  }
+}
+
 export async function adminApproveUser(userId, userName, approver) {
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
   if (!userDoc.exists()) throw new Error("User not found");
@@ -125,6 +157,12 @@ export async function adminApproveUser(userId, userName, approver) {
   if (approved) {
     await notifyApprovedUser(userId, userName);
   }
+
+  await notifyAdminsAndHostsAboutApproval(
+    userId,
+    userName,
+    approver?.name || "Admin",
+  );
 }
 
 export async function hostApproveUser(userId, userName, host) {
@@ -143,6 +181,12 @@ export async function hostApproveUser(userId, userName, host) {
   if (approved) {
     await notifyApprovedUser(userId, userName);
   }
+
+  await notifyAdminsAndHostsAboutApproval(
+    userId,
+    userName,
+    host?.name || "Host",
+  );
 }
 
 /**
@@ -163,6 +207,32 @@ export async function toggleCanAssignEventsToOthers(userId, enabled) {
   await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
     canAssignEventsToOthers: enabled,
   });
+
+  const [admins, hosts] = await Promise.all([
+    getUsersByRole("admin"),
+    getUsersByRole("host"),
+  ]);
+  const recipients = [...admins, ...hosts].filter(
+    (user) => user.id && user.approved && !user.disabled && user.id !== userId,
+  );
+
+  if (!recipients.length) return;
+
+  const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
+  const targetUser = userDoc.exists()
+    ? { id: userDoc.id, ...userDoc.data() }
+    : null;
+
+  await Promise.all(
+    recipients.map((recipient) =>
+      createNotification({
+        userId: recipient.id,
+        title: "Assign Permission Updated",
+        message: `${targetUser?.name || "A user"} ${enabled ? "can now" : "can no longer"} assign events to others.`,
+        type: "users",
+      }),
+    ),
+  );
 }
 
 /**
