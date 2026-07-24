@@ -134,7 +134,11 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
             />
             <Detail
               label="النشاط"
-              value={event.activityName && String(event.activityName).trim() ? event.activityName : "لا يوجد نشاط"}
+              value={
+                event.activityName && String(event.activityName).trim()
+                  ? event.activityName
+                  : "لا يوجد نشاط"
+              }
             />
             <Detail label="Creator" value={event.creatorName} />
             <Detail

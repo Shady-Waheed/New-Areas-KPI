@@ -132,9 +132,7 @@ export default function EventForm({
           label="الكود"
           placeholder="Select code"
           error={errors.activityCode?.message}
-          register={register("activityCode", {
-            required: "Activity code is required",
-          })}
+          register={register("activityCode")}
           options={[
             { value: "", label: "لا يوجد كود" },
             ...getActivityCodeOptions(),
@@ -145,8 +143,10 @@ export default function EventForm({
           placeholder="1 - 15"
           error={errors.activityName?.message}
           register={register("activityName", {
-            required: "النشاط مطلوب",
-            validate: validateActivityNumber,
+            validate: (value) => {
+              if (!value || String(value).trim() === "") return true;
+              return validateActivityNumber(value);
+            },
           })}
           options={[
             { value: "", label: "لا يوجد نشاط" },
