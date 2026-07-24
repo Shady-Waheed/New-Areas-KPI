@@ -70,9 +70,12 @@ export default function EventForm({
   const audienceType = watch("audienceType");
   const [audienceUsers, setAudienceUsers] = useState([]);
   const [loadingAudienceUsers, setLoadingAudienceUsers] = useState(false);
+  const [assigneeUsers, setAssigneeUsers] = useState([]);
+  const [loadingAssigneeUsers, setLoadingAssigneeUsers] = useState(false);
+  const canAssignEvent = Boolean(user?.canAssignEventsToOthers);
 
   useEffect(() => {
-    if (!user?.role || (user.role !== "admin" && user.role !== "host")) return;
+    if (!canAssignEvent) return;
     setLoadingAudienceUsers(true);
     getAllUsers()
       .then((users) => {
@@ -81,7 +84,17 @@ export default function EventForm({
         );
       })
       .finally(() => setLoadingAudienceUsers(false));
-  }, [user]);
+  }, [canAssignEvent, user?.id]);
+
+  useEffect(() => {
+    if (!canAssignEvent) return;
+    setLoadingAssigneeUsers(true);
+    getAllUsers()
+      .then((users) => {
+        setAssigneeUsers(users.filter((u) => u.approved && !u.disabled));
+      })
+      .finally(() => setLoadingAssigneeUsers(false));
+  }, [canAssignEvent, user?.id]);
 
   const handleFormSubmit = async (data) => {
     if (
@@ -94,13 +107,19 @@ export default function EventForm({
 
     const supervision = resolveSupervisionFields(data.supervisionType, user);
 
+    const selectedAssignee = assigneeUsers.find(
+      (u) => u.id === data.assignedUserId,
+    );
+
     await onSubmit({
       ...data,
       ...supervision,
-      creatorId: isEditing ? initialData?.creatorId || user?.id : user?.id,
+      creatorId: isEditing
+        ? initialData?.creatorId || user?.id
+        : selectedAssignee?.id || user?.id,
       creatorName: isEditing
         ? initialData?.creatorName || user?.name
-        : user?.name,
+        : selectedAssignee?.name || user?.name,
     });
   };
 
@@ -148,6 +167,30 @@ export default function EventForm({
           options={getActivityNumberOptions()}
         />
       </div>
+
+      {canAssignEvent && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Assign event to
+          </label>
+          <select
+            className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            defaultValue=""
+            onChange={(e) => setValue("assignedUserId", e.target.value)}
+          >
+            <option value="">Myself</option>
+            {loadingAssigneeUsers ? (
+              <option disabled>Loading users...</option>
+            ) : (
+              assigneeUsers.map((assigneeUser) => (
+                <option key={assigneeUser.id} value={assigneeUser.id}>
+                  {assigneeUser.name}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      )}
 
       <SupervisionTypePicker
         value={supervisionType}

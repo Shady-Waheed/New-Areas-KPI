@@ -13,6 +13,7 @@
  * @property {boolean} adminApproved
  * @property {string} [responsibleHostId]
  * @property {string} [responsibleHostName]
+ * @property {boolean} [canAssignEventsToOthers]
  * @property {boolean} disabled
  * @property {string} [photoURL]
  * @property {string} [fcmToken]

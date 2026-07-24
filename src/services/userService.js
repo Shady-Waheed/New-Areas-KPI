@@ -155,6 +155,17 @@ export async function changeUserRole(userId, role) {
 }
 
 /**
+ * Toggle whether a user can assign events to others.
+ * @param {string} userId
+ * @param {boolean} enabled
+ */
+export async function toggleCanAssignEventsToOthers(userId, enabled) {
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
+    canAssignEventsToOthers: enabled,
+  });
+}
+
+/**
  * Disable or enable a user.
  * @param {string} userId
  * @param {boolean} disabled

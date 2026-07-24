@@ -11,6 +11,7 @@ import {
   hostApproveUser,
   changeUserRole,
   toggleUserDisabled,
+  toggleCanAssignEventsToOthers,
 } from "../services/userService";
 import { ROLES, ROLE_LABELS } from "../utils/constants";
 import { formatTimestamp } from "../utils/formatters";
@@ -37,6 +38,7 @@ function UserActions({
   actionLoading,
   onApprove,
   onToggleDisabled,
+  onToggleAssignPermission,
 }) {
   const canManage =
     currentUser?.role === "admin" ||
@@ -61,6 +63,16 @@ function UserActions({
         >
           <Check size={14} />
           {approveLabel}
+        </Button>
+      )}
+      {currentUser?.role === "admin" && user.id !== currentUser?.id && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onToggleAssignPermission(user)}
+          loading={actionLoading === `${user.id}-assign`}
+        >
+          {user.canAssignEventsToOthers ? "Disable Assign" : "Enable Assign"}
         </Button>
       )}
       {user.id !== currentUser?.id && (
@@ -176,6 +188,25 @@ export default function UsersPage() {
     }
   };
 
+  const handleToggleAssignPermission = async (user) => {
+    setActionLoading(`${user.id}-assign`);
+    try {
+      await toggleCanAssignEventsToOthers(
+        user.id,
+        !user.canAssignEventsToOthers,
+      );
+      toast.success(
+        user.canAssignEventsToOthers
+          ? "Assign permission removed"
+          : "Assign permission enabled",
+      );
+    } catch {
+      toast.error("Failed to update assign permission");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) return <LoadingSpinner className="py-20" />;
 
   return (
@@ -243,6 +274,7 @@ export default function UsersPage() {
                   actionLoading={actionLoading}
                   onApprove={handleApprove}
                   onToggleDisabled={handleToggleDisabled}
+                  onToggleAssignPermission={handleToggleAssignPermission}
                 />
               </div>
             </div>
@@ -330,6 +362,7 @@ export default function UsersPage() {
                         actionLoading={actionLoading}
                         onApprove={handleApprove}
                         onToggleDisabled={handleToggleDisabled}
+                        onToggleAssignPermission={handleToggleAssignPermission}
                       />
                     </div>
                   </td>
