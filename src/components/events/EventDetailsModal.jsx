@@ -132,7 +132,10 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
               label="الكود"
               value={getActivityCodeLabel(event.activityCode)}
             />
-            <Detail label="النشاط" value={event.activityName} />
+            <Detail
+              label="النشاط"
+              value={event.activityName && String(event.activityName).trim() ? event.activityName : "لا يوجد نشاط"}
+            />
             <Detail label="Creator" value={event.creatorName} />
             <Detail
               label="Created By"

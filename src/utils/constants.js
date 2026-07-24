@@ -33,7 +33,9 @@ export function getActivityCodeOptions() {
  */
 export function getActivityCodeLabel(code) {
   const found = ACTIVITY_CODES.find((item) => item.code === code);
-  return found ? `${found.code} — ${found.labelAr}` : code;
+  if (found) return `${found.code} — ${found.labelAr}`;
+  if (!code || String(code).trim() === "") return "لا يوجد كود";
+  return code;
 }
 
 export const ACTIVITY_NUMBER_MIN = 1;

@@ -135,7 +135,10 @@ export default function EventForm({
           register={register("activityCode", {
             required: "Activity code is required",
           })}
-          options={getActivityCodeOptions()}
+          options={[
+            { value: "", label: "لا يوجد كود" },
+            ...getActivityCodeOptions(),
+          ]}
         />
         <Select
           label="النشاط"
@@ -145,7 +148,10 @@ export default function EventForm({
             required: "النشاط مطلوب",
             validate: validateActivityNumber,
           })}
-          options={getActivityNumberOptions()}
+          options={[
+            { value: "", label: "لا يوجد نشاط" },
+            ...getActivityNumberOptions(),
+          ]}
         />
       </div>
 
