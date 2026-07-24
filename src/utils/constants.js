@@ -13,6 +13,8 @@ export const ACTIVITY_CODES = [
   { code: "Egt625", labelAr: "الحضور" },
   { code: "Egy549", labelAr: "البناء" },
   { code: "Egt553", labelAr: "السنتر" },
+  { code: "Egt553-A", labelAr: "السنتر - اسكندرية" },
+  { code: "Egt553-B", labelAr: "السنتر - بني سويف" },
   { code: "Egs605", labelAr: "الدعم" },
   { code: "Egt586", labelAr: "الخروج" },
 ];
