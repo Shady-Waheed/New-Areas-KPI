@@ -246,9 +246,33 @@ export async function getEvent(eventId) {
  * @param {import('../types').User} currentUser
  * @returns {Promise<string>}
  */
+async function isAllowedAssignee(currentUser, assigneeId) {
+  if (!assigneeId || assigneeId === currentUser.id) return true;
+  if (!currentUser.canAssignEventsToOthers) return false;
+
+  const assigneeDoc = await getDoc(doc(db, COLLECTIONS.USERS, assigneeId));
+  if (!assigneeDoc.exists()) return false;
+
+  const assigneeUser = { id: assigneeDoc.id, ...assigneeDoc.data() };
+  const explicitAllowed = Array.isArray(currentUser.assignableUserIds)
+    ? currentUser.assignableUserIds.includes(assigneeId)
+    : false;
+  const responsibilityMatch = assigneeUser.responsibleHostId === currentUser.id;
+  return explicitAllowed || responsibilityMatch;
+}
+
 export async function createEvent(data, currentUser) {
   if (currentUser.role === "admin_readonly") {
     throw new Error("Read-only admins cannot create events");
+  }
+
+  if (data.assignedUserId && data.assignedUserId !== currentUser.id) {
+    const allowed = await isAllowedAssignee(currentUser, data.assignedUserId);
+    if (!allowed) {
+      throw new Error(
+        "You can only assign events to people under your responsibility.",
+      );
+    }
   }
 
   const eventData = {

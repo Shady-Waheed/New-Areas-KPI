@@ -91,7 +91,17 @@ export default function EventForm({
     setLoadingAssigneeUsers(true);
     getAllUsers()
       .then((users) => {
-        setAssigneeUsers(users.filter((u) => u.approved && !u.disabled));
+        setAssigneeUsers(
+          users.filter((u) => {
+            if (!u.approved || u.disabled || u.id === user?.id) return false;
+
+            const explicitAllowed = Array.isArray(user?.assignableUserIds)
+              ? user.assignableUserIds.includes(u.id)
+              : false;
+            const responsibilityMatch = u.responsibleHostId === user?.id;
+            return explicitAllowed || responsibilityMatch;
+          }),
+        );
       })
       .finally(() => setLoadingAssigneeUsers(false));
   }, [canAssignEvent, user?.id]);
@@ -189,6 +199,12 @@ export default function EventForm({
               ))
             )}
           </select>
+          <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800/60 dark:bg-amber-900/20 dark:text-amber-300">
+            {Array.isArray(user?.assignableUserIds) &&
+            user.assignableUserIds.length > 0
+              ? "You can add events only for the users selected by the admin."
+              : "You can add events only for users under your responsibility."}
+          </p>
         </div>
       )}
 

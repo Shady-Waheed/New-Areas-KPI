@@ -240,6 +240,10 @@ export async function toggleCanAssignEventsToOthers(userId, enabled) {
  * @param {string} userId
  * @param {boolean} disabled
  */
+export async function updateAssignableUsers(userId, assignableUserIds) {
+  await updateDoc(doc(db, COLLECTIONS.USERS, userId), { assignableUserIds });
+}
+
 export async function toggleUserDisabled(userId, disabled) {
   await updateDoc(doc(db, COLLECTIONS.USERS, userId), { disabled });
 }

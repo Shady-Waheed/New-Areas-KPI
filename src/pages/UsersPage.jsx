@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Check, UserX, UserCheck } from "lucide-react";
+import {
+  Check,
+  UserX,
+  UserCheck,
+  ChevronDown,
+  ChevronUp,
+  Users,
+} from "lucide-react";
 import Card from "../components/common/Card";
 import SearchBar from "../components/common/SearchBar";
 import Badge from "../components/common/Badge";
@@ -12,6 +19,7 @@ import {
   changeUserRole,
   toggleUserDisabled,
   toggleCanAssignEventsToOthers,
+  updateAssignableUsers,
 } from "../services/userService";
 import { ROLES, ROLE_LABELS } from "../utils/constants";
 import { formatTimestamp } from "../utils/formatters";
@@ -120,12 +128,110 @@ function UserStatusBadge({ user }) {
   return <Badge variant="warning">Pending</Badge>;
 }
 
+function AssignableUsersEditor({
+  targetUser,
+  users,
+  currentUser,
+  actionLoading,
+  expanded,
+  onToggleExpanded,
+  onUpdateAssignableUsers,
+}) {
+  if (
+    currentUser?.role !== "admin" ||
+    !targetUser?.canAssignEventsToOthers ||
+    targetUser.id === currentUser?.id
+  ) {
+    return null;
+  }
+
+  const options = users.filter(
+    (candidate) =>
+      candidate.id !== targetUser.id &&
+      candidate.id !== currentUser.id &&
+      candidate.approved &&
+      !candidate.disabled,
+  );
+
+  const selectedIds = targetUser.assignableUserIds || [];
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/60">
+      <button
+        type="button"
+        onClick={() => onToggleExpanded(targetUser.id)}
+        disabled={actionLoading === `${targetUser.id}-assign`}
+        className="flex w-full items-center justify-between rounded-lg border border-transparent px-1 py-1 text-left transition hover:border-slate-300 hover:bg-white/70 dark:hover:border-slate-600 dark:hover:bg-slate-700/40"
+      >
+        <div className="flex items-center gap-2">
+          <div className="rounded-md bg-primary-100 p-1.5 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+            <Users size={14} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Assignable users
+            </p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              {selectedIds.length > 0
+                ? `${selectedIds.length} selected`
+                : "No users selected"}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-full p-1 text-gray-500 dark:text-gray-400">
+          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="mt-3 space-y-2">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            Choose which users this person can create events for.
+          </p>
+
+          {options.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-300 px-3 py-3 text-sm text-gray-500 dark:border-slate-600 dark:text-gray-400">
+              No eligible users available right now.
+            </div>
+          ) : (
+            <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/50">
+              {options.map((option) => {
+                const checked = selectedIds.includes(option.id);
+                return (
+                  <label
+                    key={option.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-gray-700 transition hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-slate-800"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const nextIds = checked
+                          ? selectedIds.filter((id) => id !== option.id)
+                          : [...selectedIds, option.id];
+                        onUpdateAssignableUsers(targetUser.id, nextIds);
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span>{option.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
+  const [expandedAssignEditor, setExpandedAssignEditor] = useState(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToUsers((data) => {
@@ -207,6 +313,18 @@ export default function UsersPage() {
     }
   };
 
+  const handleUpdateAssignableUsers = async (userId, assignableUserIds) => {
+    setActionLoading(`${userId}-assign`);
+    try {
+      await updateAssignableUsers(userId, assignableUserIds);
+      toast.success("Assignable users updated");
+    } catch {
+      toast.error("Failed to update assignable users");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) return <LoadingSpinner className="py-20" />;
 
   return (
@@ -277,6 +395,20 @@ export default function UsersPage() {
                   onToggleAssignPermission={handleToggleAssignPermission}
                 />
               </div>
+
+              <AssignableUsersEditor
+                targetUser={user}
+                users={users}
+                currentUser={currentUser}
+                actionLoading={actionLoading}
+                expanded={expandedAssignEditor === user.id}
+                onToggleExpanded={(userId) =>
+                  setExpandedAssignEditor((current) =>
+                    current === userId ? null : userId,
+                  )
+                }
+                onUpdateAssignableUsers={handleUpdateAssignableUsers}
+              />
             </div>
           </Card>
         ))}
@@ -355,7 +487,7 @@ export default function UsersPage() {
                     {formatTimestamp(user.createdAt)}
                   </td>
                   <td className="px-4 py-4 lg:px-6">
-                    <div className="min-w-[10rem]">
+                    <div className="min-w-[12rem] space-y-3">
                       <UserActions
                         user={user}
                         currentUser={currentUser}
@@ -363,6 +495,19 @@ export default function UsersPage() {
                         onApprove={handleApprove}
                         onToggleDisabled={handleToggleDisabled}
                         onToggleAssignPermission={handleToggleAssignPermission}
+                      />
+                      <AssignableUsersEditor
+                        targetUser={user}
+                        users={users}
+                        currentUser={currentUser}
+                        actionLoading={actionLoading}
+                        expanded={expandedAssignEditor === user.id}
+                        onToggleExpanded={(userId) =>
+                          setExpandedAssignEditor((current) =>
+                            current === userId ? null : userId,
+                          )
+                        }
+                        onUpdateAssignableUsers={handleUpdateAssignableUsers}
                       />
                     </div>
                   </td>
