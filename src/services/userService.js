@@ -146,9 +146,12 @@ export async function adminApproveUser(userId, userName, approver) {
 
   if (isHostUser) {
     updateData.hostApproved = true;
-    if (approver) {
+    if (approver?.role === "host") {
       updateData.responsibleHostId = approver.id;
       updateData.responsibleHostName = approver.name;
+    } else {
+      updateData.responsibleHostId = null;
+      updateData.responsibleHostName = null;
     }
   }
 
