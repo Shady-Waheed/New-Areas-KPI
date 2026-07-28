@@ -261,6 +261,32 @@ async function isAllowedAssignee(currentUser, assigneeId) {
   return explicitAllowed || responsibilityMatch;
 }
 
+async function getEventNotificationRecipients(eventData, currentUser) {
+  const recipientIds = new Set();
+
+  const targetUserId = eventData.creatorId || currentUser.id;
+  if (targetUserId) {
+    const targetUserDoc = await getDoc(
+      doc(db, COLLECTIONS.USERS, targetUserId),
+    );
+    if (targetUserDoc.exists()) {
+      const targetUser = { id: targetUserDoc.id, ...targetUserDoc.data() };
+      if (targetUser.responsibleHostId) {
+        recipientIds.add(targetUser.responsibleHostId);
+      }
+    }
+  }
+
+  const admins = await getUsersByRole("admin");
+  admins
+    .filter(
+      (user) => user.approved && !user.disabled && user.id !== currentUser.id,
+    )
+    .forEach((user) => recipientIds.add(user.id));
+
+  return Array.from(recipientIds);
+}
+
 export async function createEvent(data, currentUser) {
   if (currentUser.role === "admin_readonly") {
     throw new Error("Read-only admins cannot create events");
@@ -310,45 +336,31 @@ export async function createEvent(data, currentUser) {
       });
     }
 
-    const [admins, hosts, readOnlyAdmins] = await Promise.all([
-      getUsersByRole("admin"),
-      getUsersByRole("host"),
-      getUsersByRole("admin_readonly"),
-    ]);
-    const privilegedIds = [...admins, ...hosts, ...readOnlyAdmins]
-      .filter((u) => !u.disabled && u.approved && u.id !== currentUser.id)
-      .map((u) => u.id);
+    const notificationRecipients = await getEventNotificationRecipients(
+      eventData,
+      currentUser,
+    );
 
-    if (privilegedIds.length) {
-      await notifyUsers(privilegedIds, {
-        title: "New Event Added",
-        message: `${eventData.creatorName} has a new event: "${eventData.title}"`,
+    if (notificationRecipients.length) {
+      await notifyUsers(notificationRecipients, {
+        title: "New Event",
+        message: `${currentUser.name} created a new event: "${eventData.title}"`,
         type: "event",
         eventId: docRef.id,
       });
     }
 
-    if (currentUser.role === "user") {
-      if (privilegedIds.length) {
-        await notifyUsers(privilegedIds, {
-          title: "New Event",
-          message: `${currentUser.name} created a new event: "${eventData.title}"`,
-          type: "event",
-          eventId: docRef.id,
-        });
-      }
-    } else {
-      if (
-        eventData.audienceType === "selected" &&
-        eventData.audienceUserIds.length > 0
-      ) {
-        await notifyUsers(eventData.audienceUserIds, {
-          title: "New Event",
-          message: `${currentUser.name} shared an event with you: "${eventData.title}"`,
-          type: "event",
-          eventId: docRef.id,
-        });
-      }
+    if (
+      currentUser.role !== "user" &&
+      eventData.audienceType === "selected" &&
+      eventData.audienceUserIds.length > 0
+    ) {
+      await notifyUsers(eventData.audienceUserIds, {
+        title: "New Event",
+        message: `${currentUser.name} shared an event with you: "${eventData.title}"`,
+        type: "event",
+        eventId: docRef.id,
+      });
     }
   } catch (notifyError) {
     console.error(
