@@ -241,13 +241,19 @@ export default function UsersPage() {
     return unsubscribe;
   }, []);
 
-  const filteredUsers = users
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const visibleUsers = users.filter((u) => {
+    if (currentUser?.role !== "host") return true;
+    if (u.role !== "user") return false;
+    return !u.hostApproved || u.responsibleHostId === currentUser.id;
+  });
+
+  const filteredUsers = visibleUsers
     .filter((u) => {
-      if (!search) return true;
-      return (
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase())
-      );
+      if (!normalizedSearch) return true;
+      const haystack = `${u.name || ""} ${u.email || ""}`.toLowerCase();
+      return haystack.includes(normalizedSearch);
     })
     .sort(sortUsersByRoleAndName);
 
@@ -333,12 +339,28 @@ export default function UsersPage() {
         <h2 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">
           User Management
         </h2>
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search users..."
-          className="w-full sm:max-w-sm"
-        />
+        <div className="relative w-full sm:max-w-sm">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search users by name or email..."
+            className="w-full"
+          />
+          {normalizedSearch && (
+            <div className="mt-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-900/20">
+              <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                {filteredUsers.length === 0 ? (
+                  <>No results found for "{normalizedSearch}"</>
+                ) : (
+                  <>
+                    Found {filteredUsers.length} user
+                    {filteredUsers.length === 1 ? "" : "s"}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3 md:hidden">

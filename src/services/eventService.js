@@ -265,7 +265,7 @@ async function getEventNotificationRecipients(eventData, currentUser) {
   const recipientIds = new Set();
 
   const targetUserId = eventData.creatorId || currentUser.id;
-  if (targetUserId) {
+  if (targetUserId && targetUserId !== currentUser.id) {
     const targetUserDoc = await getDoc(
       doc(db, COLLECTIONS.USERS, targetUserId),
     );
@@ -342,12 +342,19 @@ export async function createEvent(data, currentUser) {
     );
 
     if (notificationRecipients.length) {
-      await notifyUsers(notificationRecipients, {
-        title: "New Event",
-        message: `${currentUser.name} created a new event: "${eventData.title}"`,
-        type: "event",
-        eventId: docRef.id,
+      const validRecipients = notificationRecipients.filter((recipientId) => {
+        if (!recipientId || recipientId === currentUser.id) return false;
+        return true;
       });
+
+      if (validRecipients.length) {
+        await notifyUsers(validRecipients, {
+          title: "New Event",
+          message: `${currentUser.name} created a new event: "${eventData.title}"`,
+          type: "event",
+          eventId: docRef.id,
+        });
+      }
     }
 
     if (
@@ -355,12 +362,18 @@ export async function createEvent(data, currentUser) {
       eventData.audienceType === "selected" &&
       eventData.audienceUserIds.length > 0
     ) {
-      await notifyUsers(eventData.audienceUserIds, {
-        title: "New Event",
-        message: `${currentUser.name} shared an event with you: "${eventData.title}"`,
-        type: "event",
-        eventId: docRef.id,
-      });
+      const audienceRecipients = eventData.audienceUserIds.filter(
+        (id) => id && id !== currentUser.id,
+      );
+
+      if (audienceRecipients.length) {
+        await notifyUsers(audienceRecipients, {
+          title: "New Event",
+          message: `${currentUser.name} shared an event with you: "${eventData.title}"`,
+          type: "event",
+          eventId: docRef.id,
+        });
+      }
     }
   } catch (notifyError) {
     console.error(

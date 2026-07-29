@@ -1,13 +1,19 @@
-import { Filter, X } from 'lucide-react'
-import Select from '../common/Select'
-import Input from '../common/Input'
-import { getActivityCodeOptions } from '../../utils/constants'
+import { Filter, X } from "lucide-react";
+import Select from "../common/Select";
+import Input from "../common/Input";
+import { getActivityCodeOptions } from "../../utils/constants";
 
 /**
- * @param {{ filters: object, onChange: (filters: object) => void, onClear: () => void }} props
+ * @param {{ filters: object, onChange: (filters: object) => void, onClear: () => void, personOptions?: string[] }} props
  */
-export default function EventFilters({ filters, onChange, onClear }) {
-  const hasFilters = Object.values(filters).some((v) => v)
+export default function EventFilters({
+  filters,
+  onChange,
+  onClear,
+  personOptions = [],
+}) {
+  const hasFilters = Object.values(filters).some((v) => v);
+  const personDatalistId = "filter-person-options";
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-900">
@@ -29,38 +35,55 @@ export default function EventFilters({ filters, onChange, onClear }) {
       </div>
 
       <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <Input
-          label="Person"
-          placeholder="Search by name..."
-          value={filters.person || ''}
-          onChange={(e) => onChange({ ...filters, person: e.target.value })}
-        />
+        <div className="space-y-1">
+          <label
+            htmlFor="person-filter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Person
+          </label>
+          <input
+            id="person-filter"
+            list={personDatalistId}
+            value={filters.person || ""}
+            onChange={(e) => onChange({ ...filters, person: e.target.value })}
+            placeholder="Search by name..."
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+          />
+          <datalist id={personDatalistId}>
+            {personOptions.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        </div>
         <Input
           label="Area"
           placeholder="Filter by area..."
-          value={filters.area || ''}
+          value={filters.area || ""}
           onChange={(e) => onChange({ ...filters, area: e.target.value })}
         />
         <Input
           label="Church"
           placeholder="Filter by church..."
-          value={filters.church || ''}
+          value={filters.church || ""}
           onChange={(e) => onChange({ ...filters, church: e.target.value })}
         />
         <Select
           label="الكود"
           placeholder="All codes"
-          value={filters.activityCode || ''}
-          onChange={(e) => onChange({ ...filters, activityCode: e.target.value })}
+          value={filters.activityCode || ""}
+          onChange={(e) =>
+            onChange({ ...filters, activityCode: e.target.value })
+          }
           options={getActivityCodeOptions()}
         />
         <Input
           label="Date"
           type="date"
-          value={filters.date || ''}
+          value={filters.date || ""}
           onChange={(e) => onChange({ ...filters, date: e.target.value })}
         />
       </div>
     </div>
-  )
+  );
 }
