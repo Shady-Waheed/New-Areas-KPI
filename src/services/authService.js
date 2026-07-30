@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   deleteUser,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -83,6 +84,15 @@ export async function loginUser(credentials) {
  * @param {string} userId
  * @returns {Promise<import('../types').User | null>}
  */
+export async function sendPasswordReset(email) {
+  const actionCodeSettings = {
+    url: `${window.location.origin}/login`,
+    handleCodeInApp: false,
+  };
+
+  await sendPasswordResetEmail(auth, email, actionCodeSettings);
+}
+
 export async function getUserProfile(userId) {
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
   if (!userDoc.exists()) return null;
