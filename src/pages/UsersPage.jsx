@@ -20,6 +20,7 @@ import {
   toggleUserDisabled,
   toggleCanAssignEventsToOthers,
   updateAssignableUsers,
+  updateUserProfile,
 } from "../services/userService";
 import { ROLES, ROLE_LABELS } from "../utils/constants";
 import { formatTimestamp } from "../utils/formatters";
@@ -116,6 +117,38 @@ function UserRoleCell({ user, currentUser, actionLoading, onRoleChange }) {
   }
 
   return <Badge variant="info">{ROLE_LABELS[user.role]}</Badge>;
+}
+
+function ResponsibleHostCell({
+  user,
+  currentUser,
+  hostUsers,
+  actionLoading,
+  onHostChange,
+}) {
+  if (currentUser?.role === "admin" && user.role === "user") {
+    return (
+      <select
+        value={user.responsibleHostId || ""}
+        onChange={(e) => {
+          const hostId = e.target.value;
+          const host = hostUsers.find((h) => h.id === hostId);
+          onHostChange(user.id, hostId || null, host?.name || "");
+        }}
+        disabled={actionLoading === `${user.id}-host`}
+        className="w-full min-w-0 rounded border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+      >
+        <option value="">No host</option>
+        {hostUsers.map((host) => (
+          <option key={host.id} value={host.id}>
+            {host.name}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return <div>{user.responsibleHostName || "-"}</div>;
 }
 
 function UserStatusBadge({ user }) {
@@ -243,6 +276,10 @@ export default function UsersPage() {
 
   const normalizedSearch = search.trim().toLowerCase();
 
+  const hostUsers = users
+    .filter((u) => u.role === "host" && !u.disabled)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const visibleUsers = users.filter((u) => {
     if (currentUser?.role !== "host") return true;
     if (u.role !== "user") return false;
@@ -331,6 +368,21 @@ export default function UsersPage() {
     }
   };
 
+  const handleResponsibleHostChange = async (userId, hostId, hostName) => {
+    setActionLoading(`${userId}-host`);
+    try {
+      await updateUserProfile(userId, {
+        responsibleHostId: hostId || null,
+        responsibleHostName: hostName || null,
+      });
+      toast.success("Responsible host updated");
+    } catch {
+      toast.error("Failed to update responsible host");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) return <LoadingSpinner className="py-20" />;
 
   return (
@@ -400,13 +452,19 @@ export default function UsersPage() {
 
               <div className="grid gap-2 text-sm text-gray-500 dark:text-gray-400 sm:grid-cols-2">
                 <div>Joined {formatTimestamp(user.createdAt)}</div>
-                {user.responsibleHostName ? (
-                  <div>Responsible host: {user.responsibleHostName}</div>
-                ) : (
-                  <div className="min-h-[1.4rem]" />
-                )}
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Responsible host
+                  </span>
+                  <ResponsibleHostCell
+                    user={user}
+                    currentUser={currentUser}
+                    hostUsers={hostUsers}
+                    actionLoading={actionLoading}
+                    onHostChange={handleResponsibleHostChange}
+                  />
+                </div>
               </div>
-
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <UserActions
                   user={user}
@@ -486,7 +544,7 @@ export default function UsersPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4 lg:px-6">
-                    <div className="min-w-[8rem] max-w-[12rem] text-sm">
+                    <div className="min-w-[10rem] max-w-[16rem] text-sm">
                       <UserRoleCell
                         user={user}
                         currentUser={currentUser}
@@ -496,8 +554,14 @@ export default function UsersPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4 lg:px-6 text-gray-600 dark:text-gray-400">
-                    <div className="min-w-0 text-sm break-words">
-                      {user.responsibleHostName || "-"}
+                    <div className="min-w-[10rem] text-sm break-words">
+                      <ResponsibleHostCell
+                        user={user}
+                        currentUser={currentUser}
+                        hostUsers={hostUsers}
+                        actionLoading={actionLoading}
+                        onHostChange={handleResponsibleHostChange}
+                      />
                     </div>
                   </td>
                   <td className="px-4 py-4 lg:px-6">
