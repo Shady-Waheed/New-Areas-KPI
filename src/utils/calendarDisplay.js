@@ -30,10 +30,15 @@ export function groupEventsByDate(events) {
  * @returns {string}
  */
 export function getCalendarEventTitle(event, isPrivileged) {
-  if (isPrivileged) {
-    return event.creatorName || event.createdByName || "—";
+  const baseTitle = isPrivileged
+    ? event.creatorName || event.createdByName || "—"
+    : event.title;
+
+  if (event.deleted) {
+    return `Deleted: ${baseTitle}`;
   }
-  return event.title;
+
+  return baseTitle;
 }
 
 /**
@@ -51,14 +56,16 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
   const isMonthView = viewType === "dayGridMonth";
 
   if (!isPrivileged) {
-    return events.map((event) => ({
-      id: event.id,
-      title: event.title,
-      start: toISODateTime(event.startDate, event.startTime),
-      end: toISODateTime(event.startDate, event.endTime),
-      extendedProps: { eventData: event },
-      ...getEventStyle(event, userId),
-    }));
+    return events
+      .filter((event) => !event.deleted)
+      .map((event) => ({
+        id: event.id,
+        title: event.title,
+        start: toISODateTime(event.startDate, event.startTime),
+        end: toISODateTime(event.startDate, event.endTime),
+        extendedProps: { eventData: event },
+        ...getEventStyle(event, userId),
+      }));
   }
 
   if (!isMonthView) {

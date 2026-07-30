@@ -18,6 +18,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useState } from "react";
 import { updateEvent, deleteEvent } from "../../services/eventService";
+import Textarea from "../common/Textarea";
 import toast from "react-hot-toast";
 import { Pencil, Trash2 } from "lucide-react";
 
@@ -32,6 +33,9 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
   const { user, isEditor, isPrivileged } = useAuth();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   if (!event) return null;
 
@@ -59,11 +63,17 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this event?")) return;
+    if (!cancellationReason.trim()) {
+      setDeleteError("Please provide a cancellation reason.");
+      return;
+    }
+
+    setDeleteError("");
     setLoading(true);
     try {
-      await deleteEvent(event.id);
+      await deleteEvent(event.id, cancellationReason.trim());
       toast.success("Event deleted");
+      setIsDeleteModalOpen(false);
       onClose();
     } catch {
       toast.error("Failed to delete event");
@@ -72,7 +82,9 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
     }
   };
 
-  const color = getEventColor(event, user?.id || "");
+  const color = event.deleted
+    ? "#ef4444"
+    : getEventColor(event, user?.id || "");
 
   return (
     <Modal
@@ -100,7 +112,9 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
                 style={{ backgroundColor: color }}
               />
               <Badge variant="info">
-                {getActivityCodeLabel(event.activityCode)}
+                {event.deleted
+                  ? "Deleted Event"
+                  : getActivityCodeLabel(event.activityCode)}
               </Badge>
             </div>
             {canEdit && (
@@ -116,7 +130,7 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleDelete}
+                  onClick={() => setIsDeleteModalOpen(true)}
                   loading={loading}
                 >
                   <Trash2 size={16} className="text-red-500" />
@@ -170,6 +184,17 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
             </div>
           )}
 
+          {event.deleted && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-700 dark:bg-red-900/10 dark:text-red-100">
+              <p className="text-xs font-medium uppercase">
+                Cancellation reason
+              </p>
+              <p className="mt-1 text-sm text-red-900 dark:text-red-100">
+                {event.cancellationReason || "No cancellation reason provided."}
+              </p>
+            </div>
+          )}
+
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               نوع الإشراف
@@ -205,6 +230,54 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
             </div>
           )}
         </div>
+      )}
+
+      {isDeleteModalOpen && (
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setCancellationReason("");
+            setDeleteError("");
+          }}
+          title="Cancel Event"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Please enter a reason for cancellation before deleting this event.
+            </p>
+            <Textarea
+              label="Cancellation reason"
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              placeholder="Enter cancellation reason"
+              className="min-h-[120px]"
+              error={deleteError}
+            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setCancellationReason("");
+                  setDeleteError("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleDelete}
+                loading={loading}
+              >
+                Delete Event
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </Modal>
   );

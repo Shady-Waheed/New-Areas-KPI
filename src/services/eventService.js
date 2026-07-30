@@ -101,7 +101,7 @@ function subscribeToUserVisibleEvents(user, callback) {
         buckets.adminEveryone,
         buckets.hostEveryone,
         buckets.selected,
-      ),
+      ).filter((event) => !event.deleted),
     );
   };
 
@@ -196,9 +196,11 @@ export function subscribeToEvents(user, callback) {
     const emitHostEvents = () => {
       callback(
         mergeAndSortEvents(
-          latestEvents.filter((event) =>
-            isHostVisibleEvent(event, user.id, assignedUserIds),
-          ),
+          latestEvents
+            .filter((event) =>
+              isHostVisibleEvent(event, user.id, assignedUserIds),
+            )
+            .filter((event) => !event.deleted),
         ),
       );
     };
@@ -403,9 +405,14 @@ export async function updateEvent(eventId, data) {
 
 /**
  * @param {string} eventId
+ * @param {string} cancellationReason
  */
-export async function deleteEvent(eventId) {
-  await deleteDoc(doc(db, COLLECTIONS.EVENTS, eventId));
+export async function deleteEvent(eventId, cancellationReason) {
+  await updateDoc(doc(db, COLLECTIONS.EVENTS, eventId), {
+    deleted: true,
+    deletedAt: serverTimestamp(),
+    cancellationReason: cancellationReason || "",
+  });
 }
 
 /**

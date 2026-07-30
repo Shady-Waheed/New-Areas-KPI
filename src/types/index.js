@@ -41,6 +41,9 @@
  * @property {string} supervisorId
  * @property {string} supervisorName
  * @property {'my_supervision' | 'volunteer' | 'none'} [supervisionType]
+ * @property {boolean} [deleted]
+ * @property {string} [cancellationReason]
+ * @property {import('firebase/firestore').Timestamp} [deletedAt]
  * @property {import('firebase/firestore').Timestamp} createdAt
  */
 
