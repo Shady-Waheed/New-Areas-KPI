@@ -14,6 +14,7 @@ import {
 import {
   getTodayString,
   validateEventStartDate,
+  validateEventEndDate,
 } from "../../utils/dateHelpers";
 import { useAuth } from "../../hooks/useAuth";
 import { getAllUsers } from "../../services/userService";
@@ -57,6 +58,8 @@ export default function EventForm({
       details: initialData?.details || "",
       startDate: initialData?.startDate || getTodayString(),
       startTime: initialData?.startTime || "09:00",
+      endDate:
+        initialData?.endDate || initialData?.startDate || getTodayString(),
       endTime: initialData?.endTime || "10:00",
       supervisionType: initialData
         ? inferSupervisionType(initialData, user?.id || "")
@@ -68,7 +71,20 @@ export default function EventForm({
 
   const supervisionType = watch("supervisionType");
   const audienceType = watch("audienceType");
+  const startDate = watch("startDate");
+  const startTime = watch("startTime");
+  const endDate = watch("endDate");
   const [audienceUsers, setAudienceUsers] = useState([]);
+
+  useEffect(() => {
+    if (!startDate) return;
+    if (!endDate || endDate === originalStartDate || endDate < startDate) {
+      setValue("endDate", startDate, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [endDate, originalStartDate, setValue, startDate]);
   const [loadingAudienceUsers, setLoadingAudienceUsers] = useState(false);
   const [assigneeUsers, setAssigneeUsers] = useState([]);
   const [loadingAssigneeUsers, setLoadingAssigneeUsers] = useState(false);
@@ -263,7 +279,7 @@ export default function EventForm({
         register={register("details")}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Input
           label="Start Date"
           type="date"
@@ -279,6 +295,13 @@ export default function EventForm({
               validateEventStartDate(value, {
                 allowDate: isEditing ? originalStartDate : undefined,
               }),
+            onChange: (e) => {
+              const newDate = e.target.value;
+              setValue("endDate", newDate, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+            },
           })}
         />
         <Input
@@ -290,10 +313,26 @@ export default function EventForm({
           })}
         />
         <Input
+          label="End Date"
+          type="date"
+          min={startDate || today}
+          error={errors.endDate?.message}
+          register={register("endDate", {
+            validate: () => validateEventEndDate(startDate, endDate),
+          })}
+        />
+        <Input
           label="End Time"
           type="time"
           error={errors.endTime?.message}
-          register={register("endTime", { required: "End time is required" })}
+          register={register("endTime", {
+            required: "End time is required",
+            validate: (value) => {
+              if (!startDate || !startTime || !endDate) return true;
+              if (endDate > startDate) return true;
+              return value > startTime || "End time must be after start time";
+            },
+          })}
         />
       </div>
 

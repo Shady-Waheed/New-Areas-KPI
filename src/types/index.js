@@ -32,6 +32,7 @@
  * @property {string} details
  * @property {string} startDate
  * @property {string} startTime
+ * @property {string} endDate
  * @property {string} endTime
  * @property {string} creatorId
  * @property {string} creatorName
@@ -79,6 +80,7 @@
  * @property {string} details
  * @property {string} startDate
  * @property {string} startTime
+ * @property {string} endDate
  * @property {string} endTime
  * @property {string} [creatorId]
  * @property {'my_supervision' | 'volunteer' | 'none'} supervisionType

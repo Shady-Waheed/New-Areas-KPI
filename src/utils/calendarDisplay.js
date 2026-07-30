@@ -1,4 +1,5 @@
 import { getEventStyle, getEventColor } from "./eventColors";
+import { isDateBetween } from "./dateHelpers";
 
 export const MAX_VISIBLE_PEOPLE_PER_DAY = 3;
 
@@ -10,11 +11,26 @@ export function groupEventsByDate(events) {
   /** @type {Record<string, import('../types').Event[]>} */
   const grouped = {};
 
-  events.forEach((event) => {
-    if (!grouped[event.startDate]) {
-      grouped[event.startDate] = [];
+  function eachDateBetween(startDate, endDate) {
+    const dates = [];
+    let current = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    while (current <= end) {
+      dates.push(current.toISOString().slice(0, 10));
+      current.setDate(current.getDate() + 1);
     }
-    grouped[event.startDate].push(event);
+    return dates;
+  }
+
+  events.forEach((event) => {
+    const startDate = event.startDate;
+    const endDate = event.endDate || event.startDate;
+    eachDateBetween(startDate, endDate).forEach((date) => {
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(event);
+    });
   });
 
   Object.values(grouped).forEach((dayEvents) => {
@@ -62,7 +78,7 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
         id: event.id,
         title: event.title,
         start: toISODateTime(event.startDate, event.startTime),
-        end: toISODateTime(event.startDate, event.endTime),
+        end: toISODateTime(event.endDate || event.startDate, event.endTime),
         extendedProps: { eventData: event },
         ...getEventStyle(event, userId),
       }));
@@ -73,7 +89,7 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
       id: event.id,
       title: getCalendarEventTitle(event, true),
       start: toISODateTime(event.startDate, event.startTime),
-      end: toISODateTime(event.startDate, event.endTime),
+      end: toISODateTime(event.endDate || event.startDate, event.endTime),
       extendedProps: { eventData: event },
       ...getEventStyle(event, userId),
     }));
@@ -135,6 +151,8 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
  */
 export function getEventsForDate(events, date) {
   return events
-    .filter((event) => event.startDate === date)
+    .filter((event) =>
+      isDateBetween(date, event.startDate, event.endDate || event.startDate),
+    )
     .sort((a, b) => `${a.startTime}`.localeCompare(`${b.startTime}`));
 }

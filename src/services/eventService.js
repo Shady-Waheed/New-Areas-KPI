@@ -15,6 +15,7 @@ import { COLLECTIONS } from "../utils/constants";
 import { mergeAndSortEvents } from "../utils/eventAccess";
 import { notifyUsers } from "./notificationService";
 import { getUsersByRole } from "./userService";
+import { isDateBetween } from "../utils/dateHelpers";
 
 /**
  * @param {import('../types').Event[]} lists
@@ -312,15 +313,7 @@ export async function createEvent(data, currentUser) {
     details: data.details,
     startDate: data.startDate,
     startTime: data.startTime,
-    endTime: data.endTime,
-    creatorId: data.creatorId || currentUser.id,
-    creatorName: data.creatorName || currentUser.name,
-    createdById: currentUser.id,
-    createdByName: currentUser.name,
-    createdByRole: currentUser.role,
-    supervisorId: data.supervisorId || "",
-    supervisorName: data.supervisorName || "",
-    supervisionType: data.supervisionType || "none",
+    endDate: data.endDate || data.startDate,
     audienceType: data.audienceType || "everyone",
     audienceUserIds: data.audienceUserIds || [],
     createdAt: serverTimestamp(),
@@ -440,7 +433,15 @@ export function filterEvents(events, filters) {
       return false;
     if (filters.activityCode && event.activityCode !== filters.activityCode)
       return false;
-    if (filters.date && event.startDate !== filters.date) return false;
+    if (
+      filters.date &&
+      !isDateBetween(
+        filters.date,
+        event.startDate,
+        event.endDate || event.startDate,
+      )
+    )
+      return false;
     return true;
   });
 }

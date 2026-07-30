@@ -11,6 +11,7 @@ import {
   getSupervisionLabel,
   inferSupervisionType,
 } from "../../utils/supervision";
+import { isEventStartingWithinHours } from "../../utils/dateHelpers";
 import {
   canUserReadEventComments,
   isUserOwnEvent,
@@ -38,6 +39,10 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
   const [deleteError, setDeleteError] = useState("");
 
   if (!event) return null;
+
+  const isEditLocked =
+    ["user", "host"].includes(user?.role) &&
+    isEventStartingWithinHours(event, 24);
 
   const canEdit =
     user?.role !== "admin_readonly" &&
@@ -123,6 +128,12 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditing(true)}
+                  disabled={isEditLocked}
+                  title={
+                    isEditLocked
+                      ? "Editing is locked 24 hours before the event starts."
+                      : undefined
+                  }
                 >
                   <Pencil size={16} />
                   Edit
@@ -165,7 +176,14 @@ export default function EventDetailsModal({ event, isOpen, onClose }) {
                 inferSupervisionType(event, user?.id || ""),
               )}
             />
-            <Detail label="Date" value={event.startDate} />
+            <Detail
+              label="Date"
+              value={
+                event.endDate && event.endDate !== event.startDate
+                  ? `${event.startDate} → ${event.endDate}`
+                  : event.startDate
+              }
+            />
             <Detail
               label="Time"
               value={`${event.startTime} - ${event.endTime}`}
