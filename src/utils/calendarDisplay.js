@@ -1,5 +1,5 @@
 import { getEventStyle, getEventColor } from "./eventColors";
-import { isDateBetween } from "./dateHelpers";
+import { eachDateBetween, isDateBetween } from "./dateHelpers";
 
 export const MAX_VISIBLE_PEOPLE_PER_DAY = 3;
 
@@ -10,17 +10,6 @@ export const MAX_VISIBLE_PEOPLE_PER_DAY = 3;
 export function groupEventsByDate(events) {
   /** @type {Record<string, import('../types').Event[]>} */
   const grouped = {};
-
-  function eachDateBetween(startDate, endDate) {
-    const dates = [];
-    let current = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T00:00:00`);
-    while (current <= end) {
-      dates.push(current.toISOString().slice(0, 10));
-      current.setDate(current.getDate() + 1);
-    }
-    return dates;
-  }
 
   events.forEach((event) => {
     const startDate = event.startDate;
@@ -132,7 +121,13 @@ export function buildCalendarEvents(events, user, viewType, toISODateTime) {
         title: String(count),
         start: date,
         allDay: true,
-        extendedProps: { type: "color-count", color, count, date },
+        extendedProps: {
+          type: "color-count",
+          color,
+          count,
+          date,
+          dayEvents,
+        },
         backgroundColor: "transparent",
         borderColor: "transparent",
         textColor: "#ffffff",

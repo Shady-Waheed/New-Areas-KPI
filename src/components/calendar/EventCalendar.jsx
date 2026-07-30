@@ -214,9 +214,10 @@ export default function EventCalendar({
     [clearLongPressTimer, currentView, holidayLabelMap, events, isPrivileged],
   );
 
-  const openDayPeopleModal = (date, dayEvents) => {
+  const openDayPeopleModal = (date) => {
+    const eventsForDate = getEventsForDate(events, date);
     setDayPeopleDate(date);
-    setDayPeopleEvents(dayEvents);
+    setDayPeopleEvents(eventsForDate);
     setDayPeopleOpen(true);
   };
 
@@ -235,7 +236,7 @@ export default function EventCalendar({
     const dayEvents = getEventsForDate(events, info.dateStr);
     if (dayEvents.length) {
       if (isPrivileged && currentView === "dayGridMonth") {
-        openDayPeopleModal(info.dateStr, dayEvents);
+        openDayPeopleModal(info.dateStr);
       }
       return;
     }
@@ -258,8 +259,11 @@ export default function EventCalendar({
     info.jsEvent?.stopPropagation?.();
     info.jsEvent?.preventDefault?.();
 
-    // Skip color-count badges entirely
     if (info.event.extendedProps?.type === "color-count") {
+      const colorCountProps = info.event.extendedProps;
+      if (colorCountProps.date) {
+        openDayPeopleModal(colorCountProps.date);
+      }
       return;
     }
 
@@ -270,8 +274,8 @@ export default function EventCalendar({
     const { eventData, isDaySummary, dayEvents, date } =
       info.event.extendedProps;
 
-    if (isDaySummary && dayEvents?.length) {
-      openDayPeopleModal(date, dayEvents);
+    if (isDaySummary && date) {
+      openDayPeopleModal(date);
       return;
     }
 

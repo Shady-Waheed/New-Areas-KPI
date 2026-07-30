@@ -49,6 +49,27 @@ export function isDateBetween(dateStr, startDate, endDate) {
 }
 
 /**
+ * List every YYYY-MM-DD date from startDate through endDate (inclusive).
+ * Uses local calendar dates — never UTC — so counts match isDateBetween().
+ * @param {string} startDate YYYY-MM-DD
+ * @param {string} endDate YYYY-MM-DD
+ * @returns {string[]}
+ */
+export function eachDateBetween(startDate, endDate) {
+  const dates = [];
+  let current = startDate;
+
+  while (current <= endDate) {
+    dates.push(current);
+    const next = new Date(`${current}T12:00:00`);
+    next.setDate(next.getDate() + 1);
+    current = format(next, "yyyy-MM-dd");
+  }
+
+  return dates;
+}
+
+/**
  * @returns {string} Current time as HH:mm
  */
 export function getCurrentTimeString() {
