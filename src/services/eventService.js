@@ -314,8 +314,21 @@ export async function createEvent(data, currentUser) {
     startDate: data.startDate,
     startTime: data.startTime,
     endDate: data.endDate || data.startDate,
+    endTime: data.endTime,
     audienceType: data.audienceType || "everyone",
-    audienceUserIds: data.audienceUserIds || [],
+    audienceUserIds: Array.isArray(data.audienceUserIds)
+      ? data.audienceUserIds
+      : data.audienceUserIds
+        ? [data.audienceUserIds]
+        : [],
+    creatorId: data.creatorId || currentUser.id,
+    creatorName: data.creatorName || currentUser.name,
+    createdById: currentUser.id,
+    createdByName: currentUser.name,
+    createdByRole: currentUser.role,
+    supervisionType: data.supervisionType || "none",
+    supervisorId: data.supervisorId || "",
+    supervisorName: data.supervisorName || "",
     createdAt: serverTimestamp(),
   };
 
